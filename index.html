@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | SmartSched</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        /* CSS to match your screenshot */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #283593; /* The Deep Blue from your image */
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* The Top Black Bar */
+        .top-bar {
+            width: 100%;
+            background-color: #1F2937; /* Dark Grey/Black */
+            color: #9CA3AF;
+            text-align: center;
+            padding: 15px 0;
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+
+        /* Login Container */
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            margin-top: 80px; /* Spacing from top */
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            color: white;
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 40px;
+        }
+
+        /* Google Button */
+        .btn-google {
+            background-color: white;
+            color: #374151;
+            width: 100%;
+            padding: 12px;
+            border-radius: 30px; /* Rounded pill shape */
+            border: none;
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .btn-google:hover {
+            transform: scale(1.02);
+        }
+
+        /* Inputs */
+        .input-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #E0E7FF; /* Light blue-white text */
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        /* Email Login Button */
+        .btn-email {
+            background-color: #1A237E; /* Darker Blue button */
+            color: white;
+            width: 100%;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #3949AB;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: background 0.3s;
+        }
+
+        .btn-email:hover {
+            background-color: #303F9F;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        Smart Syllabus Tracker and AI-Powered Study Planner - Log in
+    </div>
+
+    <div class="login-container">
+        <h1>Log in</h1>
+
+        <button class="btn-google">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="G" width="20">
+            Continue with Google
+        </button>
+
+        <div class="input-group">
+            <label>Email:</label>
+            <input type="email" placeholder="">
+        </div>
+
+        <div class="input-group">
+            <label>Password:</label>
+            <input type="password" placeholder="Password">
+        </div>
+
+        <button class="btn-email" onclick="goToDashboard()">
+            Continue with email
+        </button>
+    </div>
+
+    <script>
+        function goToDashboard() {
+            // This line simply redirects to the dashboard.html file
+            window.location.href = 'dashboard.html';
+        }
+    </script>
+
+</body>
+</html>
