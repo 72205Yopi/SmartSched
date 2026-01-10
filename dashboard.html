@@ -3,66 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartSched | AI Syllabus Tracker</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>SmartSched | Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+
     <style>
-        /* --- CSS STYLES --- */
+        /* --- CSS STYLES (Deep Blue Theme) --- */
         :root {
-            --primary: #4F46E5; /* Indigo */
+            --primary: #283593; /* Deep Blue */
+            --accent: #4F46E5;   /* Indigo */
             --secondary: #E0E7FF;
             --dark: #1F2937;
             --light: #F3F4F6;
             --white: #ffffff;
             --success: #10B981;
+            --urgent: #EF4444;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
-
-        body {
-            display: flex;
-            height: 100vh;
-            background-color: var(--light);
-            color: var(--dark);
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { display: flex; height: 100vh; background-color: var(--light); color: var(--dark); }
 
         /* Sidebar Styles */
         .sidebar {
-            width: 250px;
+            width: 260px;
             background-color: var(--white);
             border-right: 1px solid #e5e7eb;
             display: flex;
             flex-direction: column;
-            padding: 20px;
+            padding: 25px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
         }
 
         .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
+            font-size: 1.4rem;
+            font-weight: 800;
             color: var(--primary);
-            margin-bottom: 40px;
+            margin-bottom: 50px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         .nav-item {
-            padding: 12px 15px;
-            margin-bottom: 10px;
-            border-radius: 8px;
+            padding: 14px 15px;
+            margin-bottom: 8px;
+            border-radius: 10px;
             cursor: pointer;
             color: #6B7280;
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 0.95rem;
             transition: all 0.3s;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         .nav-item:hover, .nav-item.active {
@@ -71,77 +67,64 @@
         }
 
         /* Main Content Styles */
-        .main-content {
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; }
+        
+        .header { margin-bottom: 35px; }
+        .header h1 { font-size: 2rem; font-weight: 700; color: var(--primary); margin-bottom: 5px; }
+        .header p { color: #6B7280; font-size: 1rem; }
+
+        /* View Sections (Tab Logic) */
+        .view-section { display: none; animation: fadeIn 0.4s ease; }
+        .view-section.active { display: block; }
+
+        /* Dashboard Cards */
+        .stats-container { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 30px; }
+        .stat-card {
             flex: 1;
-            padding: 40px;
-            overflow-y: auto;
+            background: var(--white);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-left: 5px solid var(--accent);
         }
+        .stat-number { font-size: 3rem; font-weight: 700; margin: 10px 0; color: var(--dark); }
+        .stat-label { color: #6B7280; font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        .header {
-            margin-bottom: 30px;
-        }
-
-        .header h1 {
-            font-size: 1.8rem;
-            margin-bottom: 5px;
-        }
-
-        .header p {
-            color: #6B7280;
-        }
-
-        /* View Sections (Hidden/Shown via JS) */
-        .view-section {
-            display: none;
-            animation: fadeIn 0.4s ease;
-        }
-
-        .view-section.active {
-            display: block;
-        }
-
-        /* Upload Area Styles */
+        /* Upload Zone */
         .upload-zone {
             border: 2px dashed #9CA3AF;
-            border-radius: 12px;
-            padding: 50px;
+            border-radius: 16px;
+            padding: 60px;
             text-align: center;
             background-color: var(--white);
             transition: 0.3s;
             cursor: pointer;
+            margin-top: 20px;
         }
-
-        .upload-zone:hover {
-            border-color: var(--primary);
-            background-color: #F9FAFB;
-        }
-
-        .upload-icon {
-            font-size: 3rem;
-            color: #9CA3AF;
-            margin-bottom: 15px;
-        }
-
+        .upload-zone:hover { border-color: var(--primary); background-color: #F9FAFB; }
+        .upload-icon { font-size: 3.5rem; color: #9CA3AF; margin-bottom: 20px; }
+        
+        /* Buttons */
         .btn-primary {
             background-color: var(--primary);
             color: white;
             border: none;
-            padding: 12px 24px;
+            padding: 14px 28px;
             border-radius: 8px;
             font-size: 1rem;
+            font-weight: 600;
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: 25px;
             transition: 0.2s;
+            box-shadow: 0 4px 6px rgba(40, 53, 147, 0.2);
         }
+        .btn-primary:hover { background-color: #1A237E; transform: translateY(-1px); }
+        .btn-primary:disabled { background-color: #9CA3AF; cursor: not-allowed; }
 
-        .btn-primary:hover {
-            background-color: #4338ca;
-        }
-
-        /* Schedule/Cards Styles */
+        /* Schedule Grid */
         .schedule-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 20px;
             margin-top: 20px;
         }
@@ -151,36 +134,29 @@
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            border-left: 5px solid var(--primary);
+            border-left: 5px solid var(--success); /* Default Normal Priority */
+            transition: transform 0.2s;
         }
-
-        .task-card.urgent { border-left-color: #EF4444; } /* Red for urgent */
-        .task-card.medium { border-left-color: #F59E0B; } /* Orange */
-
-        .task-title { font-weight: 600; font-size: 1.1rem; margin-bottom: 5px; }
-        .task-subject { color: #6B7280; font-size: 0.9rem; margin-bottom: 15px; }
-        .task-date { font-size: 0.85rem; color: #4F46E5; font-weight: 600; display: flex; align-items: center; gap: 5px; }
-
-        /* Loader Animation */
-        .loader-container {
-            display: none; /* Hidden by default */
-            text-align: center;
-            margin-top: 50px;
-        }
+        .task-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
         
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--primary);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
+        /* Priority Colors */
+        .task-card.Urgent { border-left-color: var(--urgent); }
+        .task-card.Medium { border-left-color: #F59E0B; }
+        
+        .task-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .task-title { font-weight: 700; font-size: 1.1rem; color: var(--dark); line-height: 1.4; }
+        .task-badge { font-size: 0.75rem; padding: 4px 8px; border-radius: 12px; font-weight: 700; text-transform: uppercase; }
+        .badge-urgent { background: #FEF2F2; color: #EF4444; }
+        .badge-normal { background: #ECFDF5; color: #10B981; }
+        
+        .task-subject { color: #6B7280; font-size: 0.9rem; margin-bottom: 15px; display: flex; align-items: center; gap: 6px; }
+        .task-date { font-size: 0.9rem; color: var(--primary); font-weight: 600; display: flex; align-items: center; gap: 8px; background: #EEF2FF; padding: 8px 12px; border-radius: 6px; width: fit-content; }
 
+        /* Loader */
+        .loader-container { display: none; text-align: center; margin-top: 50px; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
     </style>
 </head>
 <body>
@@ -198,6 +174,9 @@
         <div class="nav-item" onclick="switchTab('schedule')">
             <i class="fa-solid fa-calendar-days"></i> My Schedule
         </div>
+        <div class="nav-item" onclick="window.location.href='index.html'" style="margin-top: auto; color: #EF4444;">
+            <i class="fa-solid fa-sign-out-alt"></i> Log Out
+        </div>
     </div>
 
     <div class="main-content">
@@ -205,19 +184,24 @@
         <div id="dashboard" class="view-section active">
             <div class="header">
                 <h1>Hello, Student! 👋</h1>
-                <p>Here is your academic overview for the week.</p>
+                <p>Here is your academic overview based on your uploaded syllabi.</p>
             </div>
             
-            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                <div class="task-card" style="flex: 1; border-left-color: var(--success);">
-                    <h3>Tasks Completed</h3>
-                    <h1 style="font-size: 2.5rem; margin: 10px 0;">12</h1>
-                    <p style="color: #6B7280;">Keep up the streak!</p>
+            <div class="stats-container">
+                <div class="stat-card" style="border-left-color: var(--success);">
+                    <div class="stat-label">Tasks Completed</div>
+                    <div class="stat-number" id="completed-count">0</div>
+                    <p style="color: #6B7280;">Great job! Keep going.</p>
                 </div>
-                <div class="task-card" style="flex: 1; border-left-color: #F59E0B;">
-                    <h3>Upcoming Deadlines</h3>
-                    <h1 style="font-size: 2.5rem; margin: 10px 0;">3</h1>
-                    <p style="color: #6B7280;">Next due in 2 days</p>
+                <div class="stat-card" style="border-left-color: var(--primary);">
+                    <div class="stat-label">Pending Tasks</div>
+                    <div class="stat-number" id="upcoming-count">0</div>
+                    <p style="color: #6B7280;">Upcoming deadlines</p>
+                </div>
+                <div class="stat-card" style="border-left-color: var(--urgent);">
+                    <div class="stat-label">Urgent Priority</div>
+                    <div class="stat-number" id="urgent-count">0</div>
+                    <p style="color: #6B7280;">Due within 3 days</p>
                 </div>
             </div>
         </div>
@@ -225,38 +209,37 @@
         <div id="upload" class="view-section">
             <div class="header">
                 <h1>Upload Syllabus</h1>
-                <p>Upload your course PDF or DOCX. Our AI will extract the deadlines.</p>
+                <p>Upload a PDF syllabus. Google Gemini will extract the deadlines for you.</p>
             </div>
 
-            <div class="upload-zone" onclick="triggerFileInput()">
+            <div class="upload-zone" id="drop-zone" onclick="triggerFileInput()">
                 <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
-                <h3>Drag & Drop your Syllabus here</h3>
-                <p style="color: #9CA3AF; margin-top: 10px;">or click to browse files</p>
-                <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect()">
+                <h3>Click to Upload Syllabus (PDF)</h3>
+                <p style="color: #9CA3AF; margin-top: 10px;">Supported format: PDF (Max 5MB)</p>
+                <input type="file" id="fileInput" accept="application/pdf" style="display: none;" onchange="handleFileSelect()">
             </div>
 
             <div class="loader-container" id="aiLoader">
                 <div class="spinner"></div>
-                <h3>Analyzing Syllabus with AI...</h3>
-                <p>Extracting dates, topics, and assignments.</p>
+                <h3 style="color: var(--primary);">Analyzing with Gemini AI...</h3>
+                <p>Extracting topics, assignments, and dates using NLP...</p>
             </div>
 
             <button class="btn-primary" id="processBtn" style="display: none;" onclick="processSyllabus()">
-                Generate Study Plan
+                Analyze & Generate Plan
             </button>
         </div>
 
         <div id="schedule" class="view-section">
             <div class="header">
                 <h1>Your Study Plan</h1>
-                <p>AI-generated schedule based on your uploads.</p>
+                <p>AI-curated tasks organized by priority and date.</p>
             </div>
-
+            
             <div class="schedule-grid" id="taskList">
-                <div class="task-card urgent">
-                    <div class="task-title">Calculus Midterm</div>
-                    <div class="task-subject">Mathematics</div>
-                    <div class="task-date"><i class="fa-regular fa-clock"></i> Oct 20, 2025 (High Priority)</div>
+                <div style="grid-column: 1/-1; text-align: center; color: #9CA3AF; padding: 40px; background: white; border-radius: 12px; border: 1px dashed #E5E7EB;">
+                    <i class="fa-solid fa-clipboard-list" style="font-size: 2rem; margin-bottom: 10px;"></i><br>
+                    No tasks found. Go to "Upload Syllabus" to get started!
                 </div>
             </div>
         </div>
@@ -264,92 +247,165 @@
     </div>
 
     <script>
-        // 1. Tab Switching Logic
-        function switchTab(tabId) {
-            // Remove active class from all nav items
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            // Add active class to clicked nav item
-            event.currentTarget.classList.add('active');
+        // --- GLOBAL VARIABLES ---
+        let selectedFile = null;
+        
+        // TODO: PASTE YOUR GEMINI KEY BELOW (Starts with AIza...)
+        const GEMINI_API_KEY = "AIzaSyCwB6GglDYiU_3umV0cnolgpj5mqZfatBc"; 
 
-            // Hide all sections
-            document.querySelectorAll('.view-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            // Show selected section
+        // 1. Tab Switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            const clicked = Array.from(document.querySelectorAll('.nav-item')).find(el => el.getAttribute('onclick').includes(tabId));
+            if(clicked) clicked.classList.add('active');
+
+            document.querySelectorAll('.view-section').forEach(section => section.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
         }
 
-        // 2. Upload Simulation Logic
-        function triggerFileInput() {
-            document.getElementById('fileInput').click();
-        }
-
+        // 2. File Handling
+        function triggerFileInput() { document.getElementById('fileInput').click(); }
+        
         function handleFileSelect() {
             const fileInput = document.getElementById('fileInput');
-            if(fileInput.files.length > 0) {
-                // Change the upload zone text to show file name
-                const fileName = fileInput.files[0].name;
-                document.querySelector('.upload-zone h3').innerText = "File Selected: " + fileName;
-                // Show the Process button
+            if (fileInput.files.length > 0) {
+                selectedFile = fileInput.files[0];
+                document.querySelector('.upload-zone h3').innerText = "Selected: " + selectedFile.name;
                 document.getElementById('processBtn').style.display = "inline-block";
             }
         }
 
-        // 3. AI Processing Simulation
-        function processSyllabus() {
-            // Hide upload zone and button
-            document.querySelector('.upload-zone').style.display = 'none';
+        // 3. MAIN LOGIC: Process Syllabus
+        async function processSyllabus() {
+            if (!selectedFile) return;
+
+            // UI Updates
             document.getElementById('processBtn').style.display = 'none';
-            
-            // Show Loader
+            document.querySelector('.upload-zone').style.display = 'none';
             document.getElementById('aiLoader').style.display = 'block';
 
-            // Simulate a 3-second delay (as if AI is thinking)
-            setTimeout(() => {
-                // Hide loader
-                document.getElementById('aiLoader').style.display = 'none';
-                
-                // Add new tasks to the schedule (Simulating extraction)
-                addMockTasks();
+            try {
+                // Step A: Extract Text from PDF
+                const text = await extractTextFromPDF(selectedFile);
+                console.log("PDF Text Extracted, length:", text.length);
 
-                // Switch to Schedule Tab automatically
-                switchTab('schedule');
+                // Step B: Send to Google Gemini
+                const tasks = await analyzeWithGemini(text);
                 
-                // Reset Upload Tab for next time
-                setTimeout(resetUpload, 1000);
-            }, 3000);
+                // Step C: Save & Display
+                saveTasks(tasks);
+                renderTasks();
+                
+                // Switch View
+                document.getElementById('aiLoader').style.display = 'none';
+                switchTab('schedule');
+                resetUpload();
+                alert(`Success! Gemini extracted ${tasks.length} tasks.`);
+
+            } catch (error) {
+                console.error(error);
+                alert("Error analyzing syllabus: " + error.message);
+                document.getElementById('aiLoader').style.display = 'none';
+                resetUpload();
+            }
         }
 
-        function addMockTasks() {
-            const taskList = document.getElementById('taskList');
-            
-            // New Task Data (simulated from syllabus)
-            const newTasks = [
-                { title: "Research Paper Draft", subject: "Software Engineering", date: "Oct 22, 2025", type: "medium" },
-                { title: "Chapter 4 Reading", subject: "History", date: "Oct 24, 2025", type: "normal" }
-            ];
+        // --- HELPER 1: READ PDF ---
+        async function extractTextFromPDF(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            let fullText = "";
 
-            // Create HTML for new tasks
-            newTasks.forEach(task => {
-                const taskHTML = `
-                <div class="task-card ${task.type}">
-                    <div class="task-title">${task.title}</div>
-                    <div class="task-subject">${task.subject}</div>
-                    <div class="task-date"><i class="fa-regular fa-clock"></i> ${task.date}</div>
-                </div>
-                `;
-                taskList.innerHTML += taskHTML;
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map(item => item.str).join(" ");
+                fullText += pageText + "\n";
+            }
+            return fullText;
+        }
+
+        // --- HELPER 2: CALL GEMINI API (FIXED MODEL) ---
+        async function analyzeWithGemini(syllabusText) {
+            if(GEMINI_API_KEY.includes("PASTE_YOUR")) {
+                throw new Error("Please paste your Gemini API Key in the code!");
+            }
+
+            const prompt = `
+                You are a smart syllabus planner. Analyze the text below from a course syllabus.
+                Extract all assignments, quizzes, exams, and project deadlines.
+                Return ONLY a valid JSON array. Do not use markdown formatting.
+                Schema: [{"title": "Task Name", "subject": "Course Name", "date": "YYYY-MM-DD or Week Number", "priority": "Urgent/Medium/Normal"}]
+                
+                Syllabus Text:
+                ${syllabusText.substring(0, 10000)} 
+            `;
+
+      
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
 
-            alert("Success! 2 new tasks extracted from syllabus.");
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error?.message || "Gemini API Error");
+            }
+
+            const data = await response.json();
+            
+            // Parse the AI response text
+            const aiText = data.candidates[0].content.parts[0].text;
+            // Clean up if AI adds markdown backticks
+            const jsonString = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
+            return JSON.parse(jsonString);
+        }
+
+        // --- HELPER 3: RENDER UI ---
+        function saveTasks(newTasks) {
+            const existing = JSON.parse(localStorage.getItem('smartSchedTasks')) || [];
+            const updated = [...existing, ...newTasks];
+            localStorage.setItem('smartSchedTasks', JSON.stringify(updated));
+        }
+
+        function renderTasks() {
+            const taskList = document.getElementById('taskList');
+            const tasks = JSON.parse(localStorage.getItem('smartSchedTasks')) || [];
+            
+            // Update Dashboard Counters
+            document.getElementById('upcoming-count').innerText = tasks.length;
+            const urgentCount = tasks.filter(t => t.priority === 'Urgent').length;
+            document.getElementById('urgent-count').innerText = urgentCount;
+
+            if (tasks.length === 0) return;
+
+            taskList.innerHTML = '';
+            tasks.forEach(task => {
+                const html = `
+                <div class="task-card ${task.priority}">
+                    <div class="task-header">
+                        <div class="task-title">${task.title}</div>
+                        <span class="task-badge ${task.priority === 'Urgent' ? 'badge-urgent' : 'badge-normal'}">${task.priority}</span>
+                    </div>
+                    <div class="task-subject"><i class="fa-solid fa-book"></i> ${task.subject}</div>
+                    <div class="task-date"><i class="fa-regular fa-clock"></i> ${task.date}</div>
+                </div>`;
+                taskList.innerHTML += html;
+            });
         }
 
         function resetUpload() {
             document.querySelector('.upload-zone').style.display = 'block';
-            document.querySelector('.upload-zone h3').innerText = "Drag & Drop your Syllabus here";
+            document.querySelector('.upload-zone h3').innerText = "Click to Upload Syllabus (PDF)";
+            document.getElementById('processBtn').style.display = 'none';
         }
+
+        // Load tasks on startup
+        renderTasks();
+
     </script>
 </body>
 </html>
