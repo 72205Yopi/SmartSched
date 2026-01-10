@@ -3,157 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | SmartSched</title>
+    <title>Authentication | SmartSched</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
+    
     <style>
-        /* CSS to match your screenshot */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
-
-        body {
-            background-color: #283593; /* The Deep Blue from your image */
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* The Top Black Bar */
-        .top-bar {
-            width: 100%;
-            background-color: #1F2937; /* Dark Grey/Black */
-            color: #9CA3AF;
-            text-align: center;
-            padding: 15px 0;
-            font-size: 0.9rem;
-            font-weight: 400;
-        }
-
-        /* Login Container */
-        .login-container {
-            width: 100%;
-            max-width: 400px;
-            margin-top: 80px; /* Spacing from top */
-            padding: 20px;
-            text-align: center;
-        }
-
-        h1 {
-            color: white;
-            font-size: 3rem;
-            font-weight: 700;
-            margin-bottom: 40px;
-        }
-
+        /* --- CSS STYLES --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: #283593; height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        .top-bar { width: 100%; background-color: #1F2937; color: #9CA3AF; text-align: center; padding: 15px 0; font-size: 0.9rem; }
+        .login-container { width: 100%; max-width: 400px; margin-top: 60px; padding: 20px; text-align: center; }
+        
+        h1 { color: white; font-size: 2.5rem; font-weight: 700; margin-bottom: 30px; }
+        
         /* Google Button */
-        .btn-google {
-            background-color: white;
-            color: #374151;
-            width: 100%;
-            padding: 12px;
-            border-radius: 30px; /* Rounded pill shape */
-            border: none;
-            font-weight: 600;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            cursor: pointer;
-            margin-bottom: 40px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-        }
-
-        .btn-google:hover {
-            transform: scale(1.02);
-        }
+        .btn-google { background-color: white; color: #374151; width: 100%; padding: 12px; border-radius: 30px; border: none; font-weight: 600; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s; }
+        .btn-google:hover { transform: scale(1.02); }
 
         /* Inputs */
-        .input-group {
-            text-align: left;
-            margin-bottom: 20px;
-        }
+        .input-group { text-align: left; margin-bottom: 15px; }
+        label { display: block; color: #E0E7FF; margin-bottom: 8px; font-size: 1rem; }
+        input { width: 100%; padding: 12px 15px; border-radius: 8px; border: none; font-size: 1rem; outline: none; }
 
-        label {
-            display: block;
-            color: #E0E7FF; /* Light blue-white text */
-            margin-bottom: 8px;
-            font-size: 1.1rem;
-        }
+        /* Main Action Button */
+        .btn-email { background-color: #1A237E; color: white; width: 100%; padding: 15px; border-radius: 8px; border: 1px solid #3949AB; font-size: 1.1rem; font-weight: 600; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: background 0.3s; }
+        .btn-email:hover { background-color: #303F9F; }
+        
+        /* New Toggle Link Styles */
+        .toggle-container { margin-top: 20px; color: #E0E7FF; font-size: 0.95rem; }
+        .toggle-link { color: #60A5FA; font-weight: 600; cursor: pointer; text-decoration: underline; }
+        .toggle-link:hover { color: #93C5FD; }
 
-        input {
-            width: 100%;
-            padding: 12px 15px;
-            border-radius: 8px;
-            border: none;
-            font-size: 1rem;
-            outline: none;
-        }
-
-        /* Email Login Button */
-        .btn-email {
-            background-color: #1A237E; /* Darker Blue button */
-            color: white;
-            width: 100%;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #3949AB;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            transition: background 0.3s;
-        }
-
-        .btn-email:hover {
-            background-color: #303F9F;
-        }
-
+        /* Error Message */
+        #error-msg { color: #ff6b6b; margin-top: 15px; display: none; font-size: 0.9rem; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px; }
     </style>
 </head>
 <body>
 
     <div class="top-bar">
-        Smart Syllabus Tracker and AI-Powered Study Planner - Log in
+        Smart Syllabus Tracker and AI-Powered Study Planner
     </div>
 
     <div class="login-container">
-        <h1>Log in</h1>
+        <h1 id="page-title">Log in</h1>
 
-        <button class="btn-google">
+        <button class="btn-google" id="google-btn">
             <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="G" width="20">
             Continue with Google
         </button>
 
         <div class="input-group">
             <label>Email:</label>
-            <input type="email" placeholder="">
+            <input type="email" id="email" placeholder="student@example.com">
         </div>
 
         <div class="input-group">
             <label>Password:</label>
-            <input type="password" placeholder="Password">
+            <input type="password" id="password" placeholder="Min. 6 characters">
         </div>
 
-        <button class="btn-email" onclick="goToDashboard()">
-            Continue with email
+        <button class="btn-email" id="action-btn">
+            Log in with Email
         </button>
+
+        <div class="toggle-container">
+            <span id="toggle-text">Don't have an account?</span>
+            <span class="toggle-link" id="toggle-btn">Sign Up</span>
+        </div>
+
+        <p id="error-msg"></p>
     </div>
 
-    <script>
-        function goToDashboard() {
-            // This line simply redirects to the dashboard.html file
-            window.location.href = 'dashboard.html';
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getAuth, 
+            GoogleAuthProvider, 
+            signInWithPopup, 
+            signInWithEmailAndPassword,
+            createUserWithEmailAndPassword 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // Your Exact Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyBol-uWE7KCF_ESsd7QvsIVZ9KiBWcyN4c",
+            authDomain: "smartsched-452d3.firebaseapp.com",
+            projectId: "smartsched-452d3",
+            storageBucket: "smartsched-452d3.firebasestorage.app",
+            messagingSenderId: "623006049130",
+            appId: "1:623006049130:web:a9610ea2c1e401098c7b13",
+            measurementId: "G-833N678XPR"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        // --- VARIABLES ---
+        let isLoginMode = true; // Keeps track of which screen we are on
+
+        const title = document.getElementById('page-title');
+        const actionBtn = document.getElementById('action-btn');
+        const toggleText = document.getElementById('toggle-text');
+        const toggleLink = document.getElementById('toggle-btn');
+        const errorMsg = document.getElementById('error-msg');
+
+        // --- TOGGLE SWITCH LOGIC ---
+        toggleLink.addEventListener('click', () => {
+            isLoginMode = !isLoginMode; // Switch mode
+            errorMsg.style.display = 'none'; // Clear old errors
+            
+            if (isLoginMode) {
+                // Switch UI to Login
+                title.textContent = "Log in";
+                actionBtn.textContent = "Log in with Email";
+                toggleText.textContent = "Don't have an account?";
+                toggleLink.textContent = "Sign Up";
+            } else {
+                // Switch UI to Sign Up
+                title.textContent = "Create Account";
+                actionBtn.textContent = "Sign Up with Email";
+                toggleText.textContent = "Already have an account?";
+                toggleLink.textContent = "Log in";
+            }
+        });
+
+        // --- HANDLE BUTTON CLICK (Log In OR Sign Up) ---
+        actionBtn.addEventListener('click', () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if(!email || !password) {
+                showError("Please enter email and password.");
+                return;
+            }
+
+            if (isLoginMode) {
+                // >>> LOG IN EXISTING USER
+                signInWithEmailAndPassword(auth, email, password)
+                    .then((cred) => {
+                        console.log("Logged In:", cred.user);
+                        window.location.href = 'dashboard.html';
+                    })
+                    .catch((err) => handleAuthError(err));
+            } else {
+                // >>> CREATE NEW USER (SIGN UP)
+                createUserWithEmailAndPassword(auth, email, password)
+                    .then((cred) => {
+                        console.log("Account Created:", cred.user);
+                        alert("Account created! Logging you in...");
+                        window.location.href = 'dashboard.html';
+                    })
+                    .catch((err) => handleAuthError(err));
+            }
+        });
+
+        // --- GOOGLE LOGIN ---
+        document.getElementById('google-btn').addEventListener('click', () => {
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    window.location.href = 'dashboard.html';
+                }).catch((error) => handleAuthError(error));
+        });
+
+        // --- ERROR HANDLING ---
+        function handleAuthError(error) {
+            let msg = error.message;
+            if(error.code === 'auth/email-already-in-use') msg = "That email is already registered.";
+            if(error.code === 'auth/weak-password') msg = "Password should be at least 6 characters.";
+            if(error.code === 'auth/invalid-credential') msg = "Invalid email or password.";
+            
+            showError(msg);
+        }
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorMsg.style.display = 'block';
         }
     </script>
-
 </body>
 </html>
