@@ -389,70 +389,31 @@
             return fullText;
         }
 
-<<<<<<< HEAD
         async function analyzeWithGemini(text) {
             const prompt = `Extract assignments, quizzes, exams from this syllabus text. 
             Return ONLY a valid JSON array: [{"title": "Task Name", "subject": "Course", "date": "YYYY-MM-DD", "priority": "Urgent/Medium/Normal"}]
             Text: ${text.substring(0, 10000)}`;
 
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-=======
-        async function analyzeWithGemini(syllabusText) {
-            const prompt = `
-                Analyze this syllabus text. Extract assignments, quizzes, and exams.
-                Return ONLY a valid JSON array. Schema: [{"title": "Task Name", "subject": "Course Name", "date": "YYYY-MM-DD", "priority": "Urgent/Medium/Normal"}]
-                Text: ${syllabusText.substring(0, 10000)}
-            `;
-      
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-            const response = await fetch(url, {
->>>>>>> parent of b75346d (final typo fix na talaga)
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
 
-<<<<<<< HEAD
-=======
-            if (!response.ok) throw new Error("Gemini API Error");
->>>>>>> parent of b75346d (final typo fix na talaga)
             const data = await response.json();
             const jsonString = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
             return JSON.parse(jsonString);
         }
 
-<<<<<<< HEAD
         async function saveTasksToFirestore(tasks) {
             if(!currentUser) return;
             const promises = tasks.map(task => addDoc(collection(db, "tasks"), { ...task, userId: currentUser.uid, createdAt: new Date() }));
             await Promise.all(promises);
             loadTasksFromFirestore();
-=======
-        // --- FIRESTORE FUNCTIONS (THE NEW PART) ---
-        async function saveTasksToFirestore(tasks) {
-            if(!currentUser) return;
-            
-            // Loop through tasks and save each one
-            const promises = tasks.map(task => {
-                return addDoc(collection(db, "tasks"), {
-                    ...task,
-                    userId: currentUser.uid, // Link task to user
-                    createdAt: new Date()
-                });
-            });
-            
-            await Promise.all(promises);
-            await loadTasksFromFirestore(); // Refresh UI
->>>>>>> parent of b75346d (final typo fix na talaga)
         }
 
         async function loadTasksFromFirestore() {
             if(!currentUser) return;
-<<<<<<< HEAD
-=======
-
-            // Query: Get tasks where userId == current User
->>>>>>> parent of b75346d (final typo fix na talaga)
             const q = query(collection(db, "tasks"), where("userId", "==", currentUser.uid));
             const snap = await getDocs(q);
             const tasks = [];
@@ -472,7 +433,6 @@
             
             // Update Stats
             document.getElementById('total-count').innerText = tasks.length;
-<<<<<<< HEAD
             document.getElementById('upcoming-count').innerText = tasks.length;
             document.getElementById('urgent-count').innerText = tasks.filter(t => t.priority === 'Urgent').length;
 
@@ -493,40 +453,3 @@
             });
         }
     </script>
-=======
-            document.getElementById('upcoming-count').innerText = tasks.length; // You can filter this later
-            document.getElementById('urgent-count').innerText = tasks.filter(t => t.priority === 'Urgent').length;
-
-            if (tasks.length === 0) {
-                taskList.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #9CA3AF; padding: 40px; background: white; border-radius: 12px; border: 1px dashed #E5E7EB;">
-                    <i class="fa-solid fa-clipboard-list" style="font-size: 2rem; margin-bottom: 10px;"></i><br>
-                    No tasks found. Go to "Upload Syllabus" to get started!
-                </div>`;
-                return;
-            }
-
-            taskList.innerHTML = '';
-            tasks.forEach(task => {
-                const html = `
-                <div class="task-card ${task.priority}">
-                    <div class="task-header">
-                        <div class="task-title">${task.title}</div>
-                        <span class="task-badge ${task.priority === 'Urgent' ? 'badge-urgent' : 'badge-normal'}">${task.priority}</span>
-                    </div>
-                    <div class="task-subject"><i class="fa-solid fa-book"></i> ${task.subject}</div>
-                    <div class="task-date"><i class="fa-regular fa-clock"></i> ${task.date}</div>
-                    <i class="fa-solid fa-trash delete-btn" onclick="deleteTask('${task.id}')"></i>
-                </div>`;
-                taskList.innerHTML += html;
-            });
-        }
-
-        function resetUpload() {
-            document.querySelector('.upload-zone').style.display = 'block';
-            document.querySelector('.upload-zone h3').innerText = "Click to Upload Syllabus (PDF)";
-            document.getElementById('processBtn').style.display = 'none';
-        }
-    </script>
-</body>
-</html>
->>>>>>> parent of b75346d (final typo fix na talaga)
