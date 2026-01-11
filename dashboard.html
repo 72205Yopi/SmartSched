@@ -336,7 +336,7 @@
             document.getElementById('aiLoader').style.display = 'block';
 
             try {
-                consttext = await extractTextFromPDF(selectedFile);
+                const text = await extractTextFromPDF(selectedFile);
                 const tasks = await analyzeWithGemini(consttext);
                 
                 // Save to Firestore instead of LocalStorage
