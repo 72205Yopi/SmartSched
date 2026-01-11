@@ -3,60 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | SmartSched</title>
+    <title>Authentication | SmartSched</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
+    
     <style>
+        /* --- CSS STYLES --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background-color: #283593; height: 100vh; display: flex; flex-direction: column; align-items: center; }
-        .top-bar { width: 100%; background-color: #1F2937; color: #9CA3AF; text-align: center; padding: 15px 0; font-size: 0.9rem; font-weight: 400; }
-        .login-container { width: 100%; max-width: 400px; margin-top: 80px; padding: 20px; text-align: center; }
-        h1 { color: white; font-size: 3rem; font-weight: 700; margin-bottom: 40px; }
-        .btn-google { background-color: white; color: #374151; width: 100%; padding: 12px; border-radius: 30px; border: none; font-weight: 600; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; margin-bottom: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s; }
-        .btn-google:hover { transform: scale(1.02); background-color: #f3f4f6; }
-        .input-group { text-align: left; margin-bottom: 20px; }
-        label { display: block; color: #E0E7FF; margin-bottom: 8px; font-size: 1.1rem; }
-        input { width: 100%; padding: 12px 15px; border-radius: 8px; border: none; font-size: 1rem; outline: none; transition: 0.3s; }
-        input:focus { box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2); }
-        .btn-email { background-color: #1A237E; color: white; width: 100%; padding: 15px; border-radius: 8px; border: 1px solid #3949AB; font-size: 1.1rem; font-weight: 600; cursor: pointer; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: background 0.3s; }
-        .btn-email:hover { background-color: #303F9F; }
-        .error-msg { color: #ff8a80; font-size: 0.9rem; margin-top: 5px; display: none; }
+        body { background-color: #283593; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        .login-container { 
+            background: white;
+            width: 100%; 
+            max-width: 400px; 
+            padding: 40px; 
+            border-radius: 12px;
+            text-align: center; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        h1 { color: #1F2937; font-size: 2rem; font-weight: 700; margin-bottom: 30px; }
+        
+        /* Google Button */
+        .btn-google { background-color: white; color: #374151; width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-weight: 600; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; margin-bottom: 20px; transition: 0.2s; }
+        .btn-google:hover { background-color: #f9f9f9; }
+
+        /* Inputs */
+        .input-group { text-align: left; margin-bottom: 15px; }
+        label { display: block; color: #374151; margin-bottom: 5px; font-size: 0.9rem; font-weight: 600; }
+        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 1rem; outline: none; }
+        input:focus { border-color: #283593; }
+
+        /* Main Action Button */
+        .btn-email { background-color: #283593; color: white; width: 100%; padding: 15px; border-radius: 8px; border: none; font-size: 1.1rem; font-weight: 600; cursor: pointer; margin-top: 10px; transition: background 0.3s; }
+        .btn-email:hover { background-color: #1A237E; }
+        
+        /* Toggle Link Styles */
+        .toggle-container { margin-top: 20px; color: #6B7280; font-size: 0.9rem; }
+        .toggle-link { color: #283593; font-weight: 600; cursor: pointer; text-decoration: none; }
+        .toggle-link:hover { text-decoration: underline; }
+
+        /* Error Message */
+        #error-msg { color: #dc2626; margin-top: 15px; display: none; font-size: 0.9rem; background: #fee2e2; padding: 10px; border-radius: 6px; }
     </style>
 </head>
 <body>
-    <div class="top-bar">Smart Syllabus Tracker and AI-Powered Study Planner - Log in</div>
+
     <div class="login-container">
-        <h1>Log in</h1>
-        <button class="btn-google" onclick="handleGoogleLogin()">
-            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="G" width="24" height="24"> Continue with Google
+        <h1 id="page-title">Log in</h1>
+
+        <button class="btn-google" id="google-btn">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="G" width="20">
+            Continue with Google
         </button>
-        <div class="input-group">
-            <label>Email:</label>
-            <input type="email" id="emailInput" placeholder="student@national-u.edu.ph">
+
+        <div style="display: flex; align-items: center; margin: 20px 0;">
+            <div style="flex: 1; height: 1px; background: #ddd;"></div>
+            <span style="padding: 0 10px; color: #9ca3af; font-size: 0.9rem;">OR</span>
+            <div style="flex: 1; height: 1px; background: #ddd;"></div>
         </div>
+
         <div class="input-group">
-            <label>Password:</label>
-            <input type="password" id="passwordInput" placeholder="Password">
-            <p class="error-msg" id="errorText">Please fill in both fields.</p>
+            <label>Email Address</label>
+            <input type="email" id="email" placeholder="student@example.com">
         </div>
-        <button class="btn-email" onclick="handleEmailLogin()">Continue with email</button>
+
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="password" placeholder="Min. 6 characters">
+        </div>
+
+        <button class="btn-email" id="action-btn">
+            Log in with Email
+        </button>
+
+        <div class="toggle-container">
+            <span id="toggle-text">Don't have an account?</span>
+            <span class="toggle-link" id="toggle-btn">Sign Up</span>
+        </div>
+
+        <p id="error-msg"></p>
     </div>
-    <script>
-        function handleEmailLogin() {
-            const email = document.getElementById('emailInput').value;
-            const password = document.getElementById('passwordInput').value;
-            if(email === "" || password === "") {
-                document.getElementById('errorText').style.display = "block";
-                const container = document.querySelector('.login-container');
-                container.style.transform = "translateX(10px)";
-                setTimeout(() => { container.style.transform = "translateX(0)"; }, 100);
-            } else { window.location.href = 'dashboard.html'; }
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getAuth, 
+            GoogleAuthProvider, 
+            signInWithPopup, 
+            signInWithEmailAndPassword,
+            createUserWithEmailAndPassword 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // CONFIGURATION
+        const firebaseConfig = {
+            apiKey: "AIzaSyBol-uWE7KCF_ESsd7QvsIVZ9KiBWcyN4c",
+            authDomain: "smartsched-452d3.firebaseapp.com",
+            projectId: "smartsched-452d3",
+            storageBucket: "smartsched-452d3.firebasestorage.app",
+            messagingSenderId: "623006049130",
+            appId: "1:623006049130:web:a9610ea2c1e401098c7b13",
+            measurementId: "G-833N678XPR"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        // VARIABLES
+        let isLoginMode = true; 
+
+        const title = document.getElementById('page-title');
+        const actionBtn = document.getElementById('action-btn');
+        const toggleText = document.getElementById('toggle-text');
+        const toggleLink = document.getElementById('toggle-btn');
+        const errorMsg = document.getElementById('error-msg');
+
+        // TOGGLE SWITCH LOGIC
+        toggleLink.addEventListener('click', () => {
+            isLoginMode = !isLoginMode;
+            errorMsg.style.display = 'none'; 
+            
+            if (isLoginMode) {
+                title.textContent = "Log in";
+                actionBtn.textContent = "Log in with Email";
+                toggleText.textContent = "Don't have an account?";
+                toggleLink.textContent = "Sign Up";
+            } else {
+                title.textContent = "Create Account";
+                actionBtn.textContent = "Sign Up with Email";
+                toggleText.textContent = "Already have an account?";
+                toggleLink.textContent = "Log in";
+            }
+        });
+
+        // HANDLE EMAIL AUTH
+        actionBtn.addEventListener('click', () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if(!email || !password) {
+                showError("Please enter email and password.");
+                return;
+            }
+
+            if (isLoginMode) {
+                // LOG IN
+                signInWithEmailAndPassword(auth, email, password)
+                    .then((cred) => {
+                        window.location.href = 'dashboard.html';
+                    })
+                    .catch((err) => handleAuthError(err));
+            } else {
+                // SIGN UP
+                createUserWithEmailAndPassword(auth, email, password)
+                    .then((cred) => {
+                        alert("Account created! Logging you in...");
+                        window.location.href = 'dashboard.html';
+                    })
+                    .catch((err) => handleAuthError(err));
+            }
+        });
+
+        // HANDLE GOOGLE AUTH
+        document.getElementById('google-btn').addEventListener('click', () => {
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    window.location.href = 'dashboard.html';
+                }).catch((error) => handleAuthError(error));
+        });
+
+        function handleAuthError(error) {
+            let msg = error.message;
+            if(error.code === 'auth/email-already-in-use') msg = "That email is already registered.";
+            if(error.code === 'auth/weak-password') msg = "Password should be at least 6 characters.";
+            if(error.code === 'auth/invalid-credential') msg = "Invalid email or password.";
+            showError(msg);
         }
-        function handleGoogleLogin() {
-            const btn = document.querySelector('.btn-google');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
-            setTimeout(() => { window.location.href = 'dashboard.html'; }, 1500);
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorMsg.style.display = 'block';
         }
     </script>
 </body>
