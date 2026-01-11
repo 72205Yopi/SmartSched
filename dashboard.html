@@ -266,7 +266,7 @@
 
         // --- CONFIGURATION ---
         const firebaseConfig = {
-            apiKey: "AIzaSyBol-uWE7KCF_ESsd7QvsIVZ9KiBWcyN4c", // Safe (Restricted)
+            apiKey: "AIzaSyBol-uWE7KCF_ESsd7QvsIVZ9KiBWcyN4c", 
             authDomain: "smartsched-452d3.firebaseapp.com",
             projectId: "smartsched-452d3",
             storageBucket: "smartsched-452d3.firebasestorage.app",
@@ -279,7 +279,7 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // Your Gemini Key (Ensure Restrictions are ON in Google Cloud)
+        // Your Gemini Key
         const GEMINI_API_KEY = "AIzaSyCiBR6aae7kWrhium4IQHxZzWRSbGU1PiU"; 
 
         // --- GLOBAL STATE ---
@@ -291,9 +291,9 @@
             if (user) {
                 currentUser = user;
                 console.log("User detected:", user.email);
-                loadTasksFromFirestore(); // Load data when user logs in
+                loadTasksFromFirestore(); 
             } else {
-                window.location.href = "index.html"; // Redirect if not logged in
+                window.location.href = "index.html"; 
             }
         });
 
@@ -336,10 +336,12 @@
             document.getElementById('aiLoader').style.display = 'block';
 
             try {
+                // --- FIX APPLIED BELOW (const text) ---
                 const text = await extractTextFromPDF(selectedFile);
+                
                 const tasks = await analyzeWithGemini(text);
                 
-                // Save to Firestore instead of LocalStorage
+                // Save to Firestore 
                 await saveTasksToFirestore(tasks);
                 
                 document.getElementById('aiLoader').style.display = 'none';
@@ -375,41 +377,45 @@
                 Text: ${syllabusText.substring(0, 10000)}
             `;
       
+            // USING GEMINI 1.5 FLASH (Safest for now)
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+            
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
 
-            if (!response.ok) throw new Error("Gemini API Error");
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error?.message || "Gemini API Error");
+            }
+            
             const data = await response.json();
             const aiText = data.candidates[0].content.parts[0].text;
             const jsonString = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
             return JSON.parse(jsonString);
         }
 
-        // --- FIRESTORE FUNCTIONS (THE NEW PART) ---
+        // --- FIRESTORE FUNCTIONS ---
         async function saveTasksToFirestore(tasks) {
             if(!currentUser) return;
             
-            // Loop through tasks and save each one
             const promises = tasks.map(task => {
                 return addDoc(collection(db, "tasks"), {
                     ...task,
-                    userId: currentUser.uid, // Link task to user
+                    userId: currentUser.uid,
                     createdAt: new Date()
                 });
             });
             
             await Promise.all(promises);
-            await loadTasksFromFirestore(); // Refresh UI
+            await loadTasksFromFirestore(); 
         }
 
         async function loadTasksFromFirestore() {
             if(!currentUser) return;
 
-            // Query: Get tasks where userId == current User
             const q = query(collection(db, "tasks"), where("userId", "==", currentUser.uid));
             const querySnapshot = await getDocs(q);
             
@@ -432,38 +438,9 @@
             
             // Update Stats
             document.getElementById('total-count').innerText = tasks.length;
-            document.getElementById('upcoming-count').innerText = tasks.length; // You can filter this later
+            document.getElementById('upcoming-count').innerText = tasks.length; 
             document.getElementById('urgent-count').innerText = tasks.filter(t => t.priority === 'Urgent').length;
 
             if (tasks.length === 0) {
                 taskList.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #9CA3AF; padding: 40px; background: white; border-radius: 12px; border: 1px dashed #E5E7EB;">
-                    <i class="fa-solid fa-clipboard-list" style="font-size: 2rem; margin-bottom: 10px;"></i><br>
-                    No tasks found. Go to "Upload Syllabus" to get started!
-                </div>`;
-                return;
-            }
-
-            taskList.innerHTML = '';
-            tasks.forEach(task => {
-                const html = `
-                <div class="task-card ${task.priority}">
-                    <div class="task-header">
-                        <div class="task-title">${task.title}</div>
-                        <span class="task-badge ${task.priority === 'Urgent' ? 'badge-urgent' : 'badge-normal'}">${task.priority}</span>
-                    </div>
-                    <div class="task-subject"><i class="fa-solid fa-book"></i> ${task.subject}</div>
-                    <div class="task-date"><i class="fa-regular fa-clock"></i> ${task.date}</div>
-                    <i class="fa-solid fa-trash delete-btn" onclick="deleteTask('${task.id}')"></i>
-                </div>`;
-                taskList.innerHTML += html;
-            });
-        }
-
-        function resetUpload() {
-            document.querySelector('.upload-zone').style.display = 'block';
-            document.querySelector('.upload-zone h3').innerText = "Click to Upload Syllabus (PDF)";
-            document.getElementById('processBtn').style.display = 'none';
-        }
-    </script>
-</body>
-</html>
+                    <i class="fa-solid fa-clipboard-list" style="font-size: 2rem; margin-bottom: 10px
