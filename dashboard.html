@@ -372,7 +372,7 @@
                 Text: ${syllabusText.substring(0, 10000)}
             `;
             
-            // Using Gemini 1.5 Flash
+            // ✅ UPDATED TO GEMINI 2.5 FLASH
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
             
             const response = await fetch(url, {
@@ -383,6 +383,7 @@
 
             if (!response.ok) {
                 const err = await response.json();
+                // This helps you debug if 2.5 isn't available in your region yet
                 throw new Error(err.error?.message || "Gemini API Error");
             }
             
