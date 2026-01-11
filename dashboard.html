@@ -10,13 +10,12 @@
     <style>
         /* --- CSS STYLES --- */
         :root {
-            --primary: #4F46E5;
+            --primary: #4F46E5; /* Indigo */
             --secondary: #E0E7FF;
             --dark: #1F2937;
             --light: #F3F4F6;
             --white: #ffffff;
             --success: #10B981;
-            --danger: #EF4444;
         }
 
         * {
@@ -41,7 +40,6 @@
             display: flex;
             flex-direction: column;
             padding: 20px;
-            flex-shrink: 0;
         }
 
         .logo {
@@ -77,14 +75,9 @@
             flex: 1;
             padding: 40px;
             overflow-y: auto;
-            position: relative;
         }
 
-        /* Header & Logout Layout */
-        .top-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
+        .header {
             margin-bottom: 30px;
         }
 
@@ -97,26 +90,7 @@
             color: #6B7280;
         }
 
-        .logout-btn {
-            background-color: transparent;
-            border: 1px solid #e5e7eb;
-            padding: 8px 16px;
-            border-radius: 6px;
-            color: #6B7280;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .logout-btn:hover {
-            background-color: #fee2e2;
-            color: var(--danger);
-            border-color: #fca5a5;
-        }
-
-        /* View Sections */
+        /* View Sections (Hidden/Shown via JS) */
         .view-section {
             display: none;
             animation: fadeIn 0.4s ease;
@@ -125,73 +99,6 @@
         .view-section.active {
             display: block;
         }
-
-        /* Dashboard Grid Layout */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr; /* Stats on left, Calendar on right */
-            gap: 20px;
-        }
-        
-        @media (max-width: 1000px) {
-            .dashboard-grid { grid-template-columns: 1fr; }
-        }
-
-        /* Stats Cards */
-        .stats-container {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        
-        .stat-card {
-            background: var(--white);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            flex: 1;
-            min-width: 200px;
-            border-left: 5px solid var(--primary);
-        }
-
-        /* Calendar Styles */
-        .calendar-widget {
-            background: var(--white);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-
-        .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
-
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
-            text-align: center;
-        }
-
-        .cal-day-name {
-            font-size: 0.8rem;
-            color: #9CA3AF;
-            margin-bottom: 5px;
-        }
-
-        .cal-date {
-            padding: 8px;
-            font-size: 0.9rem;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-
-        .cal-date:hover { background-color: var(--light); }
-        .cal-date.today { background-color: var(--primary); color: white; }
 
         /* Upload Area Styles */
         .upload-zone {
@@ -227,9 +134,11 @@
             transition: 0.2s;
         }
 
-        .btn-primary:hover { background-color: #4338ca; }
+        .btn-primary:hover {
+            background-color: #4338ca;
+        }
 
-        /* Schedule/Cards Styles with HOVER EFFECT */
+        /* Schedule/Cards Styles */
         .schedule-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -243,69 +152,18 @@
             border-radius: 12px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             border-left: 5px solid var(--primary);
-            position: relative;
-            overflow: hidden; /* Ensures the overlay stays inside */
-            transition: transform 0.2s;
         }
 
-        .task-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .task-card.urgent { border-left-color: #EF4444; }
-        .task-card.medium { border-left-color: #F59E0B; }
-        .task-card.done { border-left-color: var(--success); opacity: 0.6; }
+        .task-card.urgent { border-left-color: #EF4444; } /* Red for urgent */
+        .task-card.medium { border-left-color: #F59E0B; } /* Orange */
 
         .task-title { font-weight: 600; font-size: 1.1rem; margin-bottom: 5px; }
         .task-subject { color: #6B7280; font-size: 0.9rem; margin-bottom: 15px; }
         .task-date { font-size: 0.85rem; color: #4F46E5; font-weight: 600; display: flex; align-items: center; gap: 5px; }
 
-        /* Hover Overlay */
-        .task-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(31, 41, 55, 0.95); /* Dark background */
-            color: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .task-card:hover .task-overlay {
-            opacity: 1;
-        }
-
-        .overlay-desc { font-size: 0.9rem; margin-bottom: 15px; color: #D1D5DB; }
-        
-        .btn-finish {
-            background-color: var(--success);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: 0.2s;
-        }
-
-        .btn-finish:hover { background-color: #059669; transform: scale(1.05); }
-
         /* Loader Animation */
         .loader-container {
-            display: none;
+            display: none; /* Hidden by default */
             text-align: center;
             margin-top: 50px;
         }
@@ -325,7 +183,7 @@
 
     </style>
 </head>
-<body onload="initDashboard()">
+<body>
 
     <div class="sidebar">
         <div class="logo">
@@ -344,46 +202,32 @@
 
     <div class="main-content">
         
-        <div class="top-header">
+        <div id="dashboard" class="view-section active">
             <div class="header">
                 <h1>Hello, Student! 👋</h1>
                 <p>Here is your academic overview for the week.</p>
             </div>
-            <button class="logout-btn" onclick="handleLogout()">
-                <i class="fa-solid fa-right-from-bracket"></i> Logout
-            </button>
-        </div>
-        
-        <div id="dashboard" class="view-section active">
-            <div class="dashboard-grid">
-                <div class="stats-container">
-                    <div class="stat-card" style="border-left-color: var(--success);">
-                        <h3>Tasks Completed</h3>
-                        <h1 id="completedCount" style="font-size: 2.5rem; margin: 10px 0;">12</h1>
-                        <p style="color: #6B7280;">Keep up the streak!</p>
-                    </div>
-                    <div class="stat-card" style="border-left-color: #F59E0B;">
-                        <h3>Upcoming Deadlines</h3>
-                        <h1 style="font-size: 2.5rem; margin: 10px 0;">3</h1>
-                        <p style="color: #6B7280;">Next due in 2 days</p>
-                    </div>
+            
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                <div class="task-card" style="flex: 1; border-left-color: var(--success);">
+                    <h3>Tasks Completed</h3>
+                    <h1 style="font-size: 2.5rem; margin: 10px 0;">12</h1>
+                    <p style="color: #6B7280;">Keep up the streak!</p>
                 </div>
-
-                <div class="calendar-widget">
-                    <div class="calendar-header">
-                        <span id="currentMonthYear">October 2025</span>
-                        <i class="fa-solid fa-calendar" style="color: var(--primary);"></i>
-                    </div>
-                    <div class="calendar-grid" id="calendarGrid">
-                        </div>
+                <div class="task-card" style="flex: 1; border-left-color: #F59E0B;">
+                    <h3>Upcoming Deadlines</h3>
+                    <h1 style="font-size: 2.5rem; margin: 10px 0;">3</h1>
+                    <p style="color: #6B7280;">Next due in 2 days</p>
                 </div>
             </div>
         </div>
 
         <div id="upload" class="view-section">
             <div class="header">
-                <h2>Upload Syllabus</h2>
+                <h1>Upload Syllabus</h1>
+                <p>Upload your course PDF or DOCX. Our AI will extract the deadlines.</p>
             </div>
+
             <div class="upload-zone" onclick="triggerFileInput()">
                 <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
                 <h3>Drag & Drop your Syllabus here</h3>
@@ -404,34 +248,15 @@
 
         <div id="schedule" class="view-section">
             <div class="header">
-                <h2>Your Study Plan</h2>
+                <h1>Your Study Plan</h1>
+                <p>AI-generated schedule based on your uploads.</p>
             </div>
 
             <div class="schedule-grid" id="taskList">
-                <div class="task-card urgent" id="task-1">
+                <div class="task-card urgent">
                     <div class="task-title">Calculus Midterm</div>
                     <div class="task-subject">Mathematics</div>
-                    <div class="task-date"><i class="fa-regular fa-clock"></i> Oct 20, 2025</div>
-                    
-                    <div class="task-overlay">
-                        <p class="overlay-desc">Coverage: Limits, Derivatives, and Integrals. 50% of grade.</p>
-                        <button class="btn-finish" onclick="markAsDone('task-1')">
-                            <i class="fa-solid fa-check"></i> Finished
-                        </button>
-                    </div>
-                </div>
-
-                 <div class="task-card medium" id="task-2">
-                    <div class="task-title">Physics Lab Report</div>
-                    <div class="task-subject">Science</div>
-                    <div class="task-date"><i class="fa-regular fa-clock"></i> Oct 21, 2025</div>
-                    
-                    <div class="task-overlay">
-                        <p class="overlay-desc">Submit via Canvas. Include raw data tables.</p>
-                        <button class="btn-finish" onclick="markAsDone('task-2')">
-                            <i class="fa-solid fa-check"></i> Finished
-                        </button>
-                    </div>
+                    <div class="task-date"><i class="fa-regular fa-clock"></i> Oct 20, 2025 (High Priority)</div>
                 </div>
             </div>
         </div>
@@ -554,26 +379,44 @@
 
         // --- 4. NAVIGATION LOGIC ---
         function switchTab(tabId) {
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            // Remove active class from all nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            // Add active class to clicked nav item
             event.currentTarget.classList.add('active');
-            document.querySelectorAll('.view-section').forEach(section => section.classList.remove('active'));
+
+            // Hide all sections
+            document.querySelectorAll('.view-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            // Show selected section
             document.getElementById(tabId).classList.add('active');
         }
 
-        // --- 5. UPLOAD LOGIC ---
-        function triggerFileInput() { document.getElementById('fileInput').click(); }
+        // 2. Upload Simulation Logic
+        function triggerFileInput() {
+            document.getElementById('fileInput').click();
+        }
 
         function handleFileSelect() {
             const fileInput = document.getElementById('fileInput');
             if(fileInput.files.length > 0) {
-                document.querySelector('.upload-zone h3').innerText = "File: " + fileInput.files[0].name;
+                // Change the upload zone text to show file name
+                const fileName = fileInput.files[0].name;
+                document.querySelector('.upload-zone h3').innerText = "File Selected: " + fileName;
+                // Show the Process button
                 document.getElementById('processBtn').style.display = "inline-block";
             }
         }
 
+        // 3. AI Processing Simulation
         function processSyllabus() {
+            // Hide upload zone and button
             document.querySelector('.upload-zone').style.display = 'none';
             document.getElementById('processBtn').style.display = 'none';
+            
+            // Show Loader
             document.getElementById('aiLoader').style.display = 'block';
 
             try {
@@ -584,7 +427,11 @@
                 await saveTasksToFirestore(tasks);
                 
                 document.getElementById('aiLoader').style.display = 'none';
+                
+                // Add new tasks to the schedule (Simulating extraction)
                 addMockTasks();
+
+                // Switch to Schedule Tab automatically
                 switchTab('schedule');
                 resetUpload();
                 alert(`Success! Saved ${tasks.length} tasks to the database.`);
