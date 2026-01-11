@@ -337,7 +337,7 @@
 
             try {
                 const text = await extractTextFromPDF(selectedFile);
-                const tasks = await analyzeWithGemini(consttext);
+                const tasks = await analyzeWithGemini(text);
                 
                 // Save to Firestore instead of LocalStorage
                 await saveTasksToFirestore(tasks);
