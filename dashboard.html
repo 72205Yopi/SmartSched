@@ -136,6 +136,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             border-left: 5px solid var(--success); /* Default Normal Priority */
             transition: transform 0.2s;
+            position: relative;
         }
         .task-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
         
@@ -151,6 +152,17 @@
         
         .task-subject { color: #6B7280; font-size: 0.9rem; margin-bottom: 15px; display: flex; align-items: center; gap: 6px; }
         .task-date { font-size: 0.9rem; color: var(--primary); font-weight: 600; display: flex; align-items: center; gap: 8px; background: #EEF2FF; padding: 8px 12px; border-radius: 6px; width: fit-content; }
+
+        .delete-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: #ef4444;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: 0.3s;
+        }
+        .delete-btn:hover { opacity: 1; }
 
         /* Loader */
         .loader-container { display: none; text-align: center; margin-top: 50px; }
@@ -174,7 +186,7 @@
         <div class="nav-item" onclick="switchTab('schedule')">
             <i class="fa-solid fa-calendar-days"></i> My Schedule
         </div>
-        <div class="nav-item" onclick="window.location.href='index.html'" style="margin-top: auto; color: #EF4444;">
+        <div class="nav-item" id="logoutBtn" style="margin-top: auto; color: #EF4444;">
             <i class="fa-solid fa-sign-out-alt"></i> Log Out
         </div>
     </div>
@@ -189,12 +201,12 @@
             
             <div class="stats-container">
                 <div class="stat-card" style="border-left-color: var(--success);">
-                    <div class="stat-label">Tasks Completed</div>
-                    <div class="stat-number" id="completed-count">0</div>
-                    <p style="color: #6B7280;">Great job! Keep going.</p>
+                    <div class="stat-label">Total Tasks</div>
+                    <div class="stat-number" id="total-count">0</div>
+                    <p style="color: #6B7280;">Saved in Database</p>
                 </div>
                 <div class="stat-card" style="border-left-color: var(--primary);">
-                    <div class="stat-label">Pending Tasks</div>
+                    <div class="stat-label">Assignments</div>
                     <div class="stat-number" id="upcoming-count">0</div>
                     <p style="color: #6B7280;">Upcoming deadlines</p>
                 </div>
@@ -233,28 +245,69 @@
         <div id="schedule" class="view-section">
             <div class="header">
                 <h1>Your Study Plan</h1>
-                <p>AI-curated tasks organized by priority and date.</p>
+                <p>AI-curated tasks saved to the cloud.</p>
             </div>
             
             <div class="schedule-grid" id="taskList">
                 <div style="grid-column: 1/-1; text-align: center; color: #9CA3AF; padding: 40px; background: white; border-radius: 12px; border: 1px dashed #E5E7EB;">
                     <i class="fa-solid fa-clipboard-list" style="font-size: 2rem; margin-bottom: 10px;"></i><br>
-                    No tasks found. Go to "Upload Syllabus" to get started!
+                    Loading tasks...
                 </div>
             </div>
         </div>
 
     </div>
 
-    <script>
-        // --- GLOBAL VARIABLES ---
-        let selectedFile = null;
-        
-        
+    <script type="module">
+        // --- IMPORTS ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // --- CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBol-uWE7KCF_ESsd7QvsIVZ9KiBWcyN4c", // Safe (Restricted)
+            authDomain: "smartsched-452d3.firebaseapp.com",
+            projectId: "smartsched-452d3",
+            storageBucket: "smartsched-452d3.firebasestorage.app",
+            messagingSenderId: "623006049130",
+            appId: "1:623006049130:web:a9610ea2c1e401098c7b13",
+            measurementId: "G-833N678XPR"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Your Gemini Key (Ensure Restrictions are ON in Google Cloud)
         const GEMINI_API_KEY = "AIzaSyCiBR6aae7kWrhium4IQHxZzWRSbGU1PiU"; 
 
-        // 1. Tab Switching
-        function switchTab(tabId) {
+        // --- GLOBAL STATE ---
+        let currentUser = null;
+        let selectedFile = null;
+
+        // --- AUTH LISTENER ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                console.log("User detected:", user.email);
+                loadTasksFromFirestore(); // Load data when user logs in
+            } else {
+                window.location.href = "index.html"; // Redirect if not logged in
+            }
+        });
+
+        // --- LOGOUT FUNCTION ---
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            signOut(auth).then(() => {
+                window.location.href = "index.html";
+            }).catch((error) => {
+                console.error("Logout Error:", error);
+            });
+        });
+
+        // --- UI FUNCTIONS ---
+        window.switchTab = function(tabId) {
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
             const clicked = Array.from(document.querySelectorAll('.nav-item')).find(el => el.getAttribute('onclick').includes(tabId));
             if(clicked) clicked.classList.add('active');
@@ -263,10 +316,9 @@
             document.getElementById(tabId).classList.add('active');
         }
 
-        // 2. File Handling
-        function triggerFileInput() { document.getElementById('fileInput').click(); }
+        window.triggerFileInput = function() { document.getElementById('fileInput').click(); }
         
-        function handleFileSelect() {
+        window.handleFileSelect = function() {
             const fileInput = document.getElementById('fileInput');
             if (fileInput.files.length > 0) {
                 selectedFile = fileInput.files[0];
@@ -275,47 +327,38 @@
             }
         }
 
-        // 3. MAIN LOGIC: Process Syllabus
-        async function processSyllabus() {
+        // --- MAIN LOGIC: PROCESS SYLLABUS ---
+        window.processSyllabus = async function() {
             if (!selectedFile) return;
 
-            // UI Updates
             document.getElementById('processBtn').style.display = 'none';
             document.querySelector('.upload-zone').style.display = 'none';
             document.getElementById('aiLoader').style.display = 'block';
 
             try {
-                // Step A: Extract Text from PDF
-                const text = await extractTextFromPDF(selectedFile);
-                console.log("PDF Text Extracted, length:", text.length);
-
-                // Step B: Send to Google Gemini
-                const tasks = await analyzeWithGemini(text);
+                consttext = await extractTextFromPDF(selectedFile);
+                const tasks = await analyzeWithGemini(consttext);
                 
-                // Step C: Save & Display
-                saveTasks(tasks);
-                renderTasks();
+                // Save to Firestore instead of LocalStorage
+                await saveTasksToFirestore(tasks);
                 
-                // Switch View
                 document.getElementById('aiLoader').style.display = 'none';
                 switchTab('schedule');
                 resetUpload();
-                alert(`Success! Gemini extracted ${tasks.length} tasks.`);
+                alert(`Success! Saved ${tasks.length} tasks to the database.`);
 
             } catch (error) {
                 console.error(error);
-                alert("Error analyzing syllabus: " + error.message);
+                alert("Error: " + error.message);
                 document.getElementById('aiLoader').style.display = 'none';
                 resetUpload();
             }
         }
 
-        // --- HELPER 1: READ PDF ---
         async function extractTextFromPDF(file) {
             const arrayBuffer = await file.arrayBuffer();
             const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
             let fullText = "";
-
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
                 const textContent = await page.getTextContent();
@@ -325,62 +368,80 @@
             return fullText;
         }
 
-        // --- HELPER 2: CALL GEMINI API (FIXED MODEL) ---
         async function analyzeWithGemini(syllabusText) {
-            if(GEMINI_API_KEY.includes("PASTE_YOUR")) {
-                throw new Error("Please paste your Gemini API Key in the code!");
-            }
-
             const prompt = `
-                You are a smart syllabus planner. Analyze the text below from a course syllabus.
-                Extract all assignments, quizzes, exams, and project deadlines.
-                Return ONLY a valid JSON array. Do not use markdown formatting.
-                Schema: [{"title": "Task Name", "subject": "Course Name", "date": "YYYY-MM-DD or Week Number", "priority": "Urgent/Medium/Normal"}]
-                
-                Syllabus Text:
-                ${syllabusText.substring(0, 10000)} 
+                Analyze this syllabus text. Extract assignments, quizzes, and exams.
+                Return ONLY a valid JSON array. Schema: [{"title": "Task Name", "subject": "Course Name", "date": "YYYY-MM-DD", "priority": "Urgent/Medium/Normal"}]
+                Text: ${syllabusText.substring(0, 10000)}
             `;
-
       
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-            
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
 
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error?.message || "Gemini API Error");
-            }
-
+            if (!response.ok) throw new Error("Gemini API Error");
             const data = await response.json();
-            
-            // Parse the AI response text
             const aiText = data.candidates[0].content.parts[0].text;
-            // Clean up if AI adds markdown backticks
             const jsonString = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
             return JSON.parse(jsonString);
         }
 
-        // --- HELPER 3: RENDER UI ---
-        function saveTasks(newTasks) {
-            const existing = JSON.parse(localStorage.getItem('smartSchedTasks')) || [];
-            const updated = [...existing, ...newTasks];
-            localStorage.setItem('smartSchedTasks', JSON.stringify(updated));
+        // --- FIRESTORE FUNCTIONS (THE NEW PART) ---
+        async function saveTasksToFirestore(tasks) {
+            if(!currentUser) return;
+            
+            // Loop through tasks and save each one
+            const promises = tasks.map(task => {
+                return addDoc(collection(db, "tasks"), {
+                    ...task,
+                    userId: currentUser.uid, // Link task to user
+                    createdAt: new Date()
+                });
+            });
+            
+            await Promise.all(promises);
+            await loadTasksFromFirestore(); // Refresh UI
         }
 
-        function renderTasks() {
-            const taskList = document.getElementById('taskList');
-            const tasks = JSON.parse(localStorage.getItem('smartSchedTasks')) || [];
-            
-            // Update Dashboard Counters
-            document.getElementById('upcoming-count').innerText = tasks.length;
-            const urgentCount = tasks.filter(t => t.priority === 'Urgent').length;
-            document.getElementById('urgent-count').innerText = urgentCount;
+        async function loadTasksFromFirestore() {
+            if(!currentUser) return;
 
-            if (tasks.length === 0) return;
+            // Query: Get tasks where userId == current User
+            const q = query(collection(db, "tasks"), where("userId", "==", currentUser.uid));
+            const querySnapshot = await getDocs(q);
+            
+            const tasks = [];
+            querySnapshot.forEach((doc) => {
+                tasks.push({ id: doc.id, ...doc.data() });
+            });
+
+            renderTasks(tasks);
+        }
+
+        window.deleteTask = async function(taskId) {
+            if(!confirm("Delete this task?")) return;
+            await deleteDoc(doc(db, "tasks", taskId));
+            loadTasksFromFirestore();
+        }
+
+        function renderTasks(tasks) {
+            const taskList = document.getElementById('taskList');
+            
+            // Update Stats
+            document.getElementById('total-count').innerText = tasks.length;
+            document.getElementById('upcoming-count').innerText = tasks.length; // You can filter this later
+            document.getElementById('urgent-count').innerText = tasks.filter(t => t.priority === 'Urgent').length;
+
+            if (tasks.length === 0) {
+                taskList.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #9CA3AF; padding: 40px; background: white; border-radius: 12px; border: 1px dashed #E5E7EB;">
+                    <i class="fa-solid fa-clipboard-list" style="font-size: 2rem; margin-bottom: 10px;"></i><br>
+                    No tasks found. Go to "Upload Syllabus" to get started!
+                </div>`;
+                return;
+            }
 
             taskList.innerHTML = '';
             tasks.forEach(task => {
@@ -392,6 +453,7 @@
                     </div>
                     <div class="task-subject"><i class="fa-solid fa-book"></i> ${task.subject}</div>
                     <div class="task-date"><i class="fa-regular fa-clock"></i> ${task.date}</div>
+                    <i class="fa-solid fa-trash delete-btn" onclick="deleteTask('${task.id}')"></i>
                 </div>`;
                 taskList.innerHTML += html;
             });
@@ -402,10 +464,6 @@
             document.querySelector('.upload-zone h3').innerText = "Click to Upload Syllabus (PDF)";
             document.getElementById('processBtn').style.display = 'none';
         }
-
-        // Load tasks on startup
-        renderTasks();
-
     </script>
 </body>
 </html>
