@@ -299,11 +299,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-<<<<<<< HEAD
-=======
-
-        // Your Gemini Key (Ensure Restrictions are ON in Google Cloud)
->>>>>>> parent of b75346d (final typo fix na talaga)
         const GEMINI_API_KEY = "AIzaSyCiBR6aae7kWrhium4IQHxZzWRSbGU1PiU"; 
 
         // --- GLOBAL STATE ---
@@ -313,18 +308,11 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-<<<<<<< HEAD
                 console.log("User logged in:", user.email);
                 loadTasksFromFirestore();
             } else {
                 // If checking auth is slow, don't boot them immediately while testing UI
                 // window.location.href = "index.html"; 
-=======
-                console.log("User detected:", user.email);
-                loadTasksFromFirestore(); // Load data when user logs in
-            } else {
-                window.location.href = "index.html"; // Redirect if not logged in
->>>>>>> parent of b75346d (final typo fix na talaga)
             }
         });
 
@@ -350,11 +338,6 @@
             try {
                 const text = await extractTextFromPDF(selectedFile);
                 const tasks = await analyzeWithGemini(text);
-<<<<<<< HEAD
-=======
-                
-                // Save to Firestore instead of LocalStorage
->>>>>>> parent of b75346d (final typo fix na talaga)
                 await saveTasksToFirestore(tasks);
                 
                 document.getElementById('aiLoader').style.display = 'none';
