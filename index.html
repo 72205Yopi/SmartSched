@@ -8,194 +8,56 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
-
-        body {
-            background-color: #283593; 
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .top-bar {
-            width: 100%;
-            background-color: #1F2937;
-            color: #9CA3AF;
-            text-align: center;
-            padding: 15px 0;
-            font-size: 0.9rem;
-            font-weight: 400;
-        }
-
-        .login-container {
-            width: 100%;
-            max-width: 400px;
-            margin-top: 80px;
-            padding: 20px;
-            text-align: center;
-        }
-
-        h1 {
-            color: white;
-            font-size: 3rem;
-            font-weight: 700;
-            margin-bottom: 40px;
-        }
-
-        /* Google Button */
-        .btn-google {
-            background-color: white;
-            color: #374151;
-            width: 100%;
-            padding: 12px;
-            border-radius: 30px;
-            border: none;
-            font-weight: 600;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            cursor: pointer;
-            margin-bottom: 40px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-        }
-
-        .btn-google:hover {
-            transform: scale(1.02);
-            background-color: #f3f4f6;
-        }
-
-        /* Inputs */
-        .input-group {
-            text-align: left;
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            color: #E0E7FF;
-            margin-bottom: 8px;
-            font-size: 1.1rem;
-        }
-
-        input {
-            width: 100%;
-            padding: 12px 15px;
-            border-radius: 8px;
-            border: none;
-            font-size: 1rem;
-            outline: none;
-            transition: 0.3s;
-        }
-
-        input:focus {
-            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
-        }
-
-        /* Email Login Button */
-        .btn-email {
-            background-color: #1A237E;
-            color: white;
-            width: 100%;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #3949AB;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            transition: background 0.3s;
-        }
-
-        .btn-email:hover {
-            background-color: #303F9F;
-        }
-
-        /* Error Message Style */
-        .error-msg {
-            color: #ff8a80;
-            font-size: 0.9rem;
-            margin-top: 5px;
-            display: none; /* Hidden by default */
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: #283593; height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        .top-bar { width: 100%; background-color: #1F2937; color: #9CA3AF; text-align: center; padding: 15px 0; font-size: 0.9rem; font-weight: 400; }
+        .login-container { width: 100%; max-width: 400px; margin-top: 80px; padding: 20px; text-align: center; }
+        h1 { color: white; font-size: 3rem; font-weight: 700; margin-bottom: 40px; }
+        .btn-google { background-color: white; color: #374151; width: 100%; padding: 12px; border-radius: 30px; border: none; font-weight: 600; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; margin-bottom: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s; }
+        .btn-google:hover { transform: scale(1.02); background-color: #f3f4f6; }
+        .input-group { text-align: left; margin-bottom: 20px; }
+        label { display: block; color: #E0E7FF; margin-bottom: 8px; font-size: 1.1rem; }
+        input { width: 100%; padding: 12px 15px; border-radius: 8px; border: none; font-size: 1rem; outline: none; transition: 0.3s; }
+        input:focus { box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2); }
+        .btn-email { background-color: #1A237E; color: white; width: 100%; padding: 15px; border-radius: 8px; border: 1px solid #3949AB; font-size: 1.1rem; font-weight: 600; cursor: pointer; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: background 0.3s; }
+        .btn-email:hover { background-color: #303F9F; }
+        .error-msg { color: #ff8a80; font-size: 0.9rem; margin-top: 5px; display: none; }
     </style>
 </head>
 <body>
-
-    <div class="top-bar">
-        Smart Syllabus Tracker and AI-Powered Study Planner - Log in
-    </div>
-
+    <div class="top-bar">Smart Syllabus Tracker and AI-Powered Study Planner - Log in</div>
     <div class="login-container">
         <h1>Log in</h1>
-
         <button class="btn-google" onclick="handleGoogleLogin()">
-            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="G" width="24" height="24">
-            Continue with Google
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="G" width="24" height="24"> Continue with Google
         </button>
-
         <div class="input-group">
             <label>Email:</label>
             <input type="email" id="emailInput" placeholder="student@national-u.edu.ph">
         </div>
-
         <div class="input-group">
             <label>Password:</label>
             <input type="password" id="passwordInput" placeholder="Password">
             <p class="error-msg" id="errorText">Please fill in both fields.</p>
         </div>
-
-        <button class="btn-email" onclick="handleEmailLogin()">
-            Continue with email
-        </button>
+        <button class="btn-email" onclick="handleEmailLogin()">Continue with email</button>
     </div>
-
     <script>
-        // 1. Email Login Logic
         function handleEmailLogin() {
             const email = document.getElementById('emailInput').value;
             const password = document.getElementById('passwordInput').value;
-            const errorText = document.getElementById('errorText');
-
-            // Simple validation: Check if fields are empty
             if(email === "" || password === "") {
-                errorText.style.display = "block"; // Show error message
-                
-                // Shake animation effect (optional)
+                document.getElementById('errorText').style.display = "block";
                 const container = document.querySelector('.login-container');
                 container.style.transform = "translateX(10px)";
                 setTimeout(() => { container.style.transform = "translateX(0)"; }, 100);
-            } else {
-                // If inputs are filled, go to dashboard
-                window.location.href = 'dashboard.html';
-            }
+            } else { window.location.href = 'dashboard.html'; }
         }
-
-        // 2. Google Login Simulation
         function handleGoogleLogin() {
             const btn = document.querySelector('.btn-google');
-            const originalText = btn.innerHTML;
-
-            // Change button to look like it's loading
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
-            
-            // Wait 1.5 seconds to simulate connection, then redirect
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 1500);
+            setTimeout(() => { window.location.href = 'dashboard.html'; }, 1500);
         }
     </script>
-
 </body>
 </html>
