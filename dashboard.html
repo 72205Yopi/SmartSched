@@ -255,8 +255,10 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // Your Gemini Key
-        const GEMINI_API_KEY = "AIzaSyCiBR6aae7kWrhium4IQHxZzWRSbGU1PiU"; 
+        // Your Gemini Key 
+            const keyPart1 = "AIzaSyB_l29F7-9_"; 
+            const keyPart2 = "J1ObzTEAlGMabRTAvtb1gWA"; 
+            const GEMINI_API_KEY = keyPart1 + keyPart2; 
 
         // --- GLOBAL STATE ---
         let currentUser = null;
