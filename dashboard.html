@@ -402,7 +402,7 @@
             loadTasksFromFirestore();
         }
 
-        function renderTasks(tasks) {
+       function renderTasks(tasks) {
             const list = document.getElementById('taskList');
             
             const activeTasks = tasks.filter(t => !t.isCompleted);
@@ -430,25 +430,28 @@
 
                 list.innerHTML += `
                 <div class="${cardClass}">
+                    
+                    <button class="edit-btn-corner" onclick="openEditModal('${t.id}')">
+                        <i class="fa-solid fa-pencil"></i>
+                    </button>
+
                     <div>
-                        <div class="task-title">${t.title}</div>
+                        <div class="task-title" style="padding-right: 30px;">${t.title}</div>
+                        
                         <span class="task-badge ${t.priority === 'Urgent' ? 'badge-urgent' : 'badge-normal'}" 
-                              style="font-size: 0.7rem; padding: 3px 8px; border-radius: 10px; background: #eee; float:right;">
+                              style="font-size: 0.7rem; padding: 3px 8px; border-radius: 10px; background: #eee; float:right; margin-top: 35px;">
                               ${t.priority}
                         </span>
+
                         <div class="task-subject"><i class="fa-solid fa-book"></i> ${t.subject}</div>
                         <div class="task-date"><i class="fa-regular fa-clock"></i> ${t.date}</div>
                     </div>
                     
                     <div class="card-actions">
                         <a href="${calUrl}" target="_blank" class="calendar-btn">
-                            <i class="fa-solid fa-calendar-plus"></i> Cal
+                            <i class="fa-solid fa-calendar-plus"></i> Calendar
                         </a>
                         
-                        <button class="edit-btn-inline" onclick="openEditModal('${t.id}')">
-                            <i class="fa-solid fa-pencil"></i>
-                        </button>
-
                         <button class="${checkBtnClass}" onclick="toggleComplete('${t.id}', ${t.isCompleted})">
                             <i class="fa-solid fa-check"></i>
                         </button>
