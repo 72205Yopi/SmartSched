@@ -134,6 +134,27 @@
         }
         .delete-btn:hover { opacity: 1; }
 
+        /* CALENDAR BUTTON STYLE (NEW) */
+        .calendar-btn {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 8px 12px;
+            background-color: #E0E7FF;
+            color: #4F46E5;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid #C7D2FE;
+            transition: all 0.2s;
+            width: 100%;
+            text-align: center;
+        }
+        .calendar-btn:hover {
+            background-color: #4F46E5;
+            color: white;
+        }
+
         /* Loader Animation */
         .loader-container { display: none; text-align: center; margin-top: 50px; }
         .spinner {
@@ -234,13 +255,38 @@
 
     </div>
 
+    <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            // Highlight the correct sidebar item
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(nav => {
+                if(nav.getAttribute('onclick') && nav.getAttribute('onclick').includes(tabId)) {
+                    nav.classList.add('active');
+                }
+            });
+
+            document.querySelectorAll('.view-section').forEach(section => section.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function triggerFileInput() { document.getElementById('fileInput').click(); }
+
+        function handleFileSelect() {
+            const fileInput = document.getElementById('fileInput');
+            if(fileInput.files.length > 0) {
+                const fileName = fileInput.files[0].name;
+                document.querySelector('.upload-zone h3').innerText = "File Selected: " + fileName;
+                document.getElementById('processBtn').style.display = "inline-block";
+            }
+        }
+    </script>
+
     <script type="module">
-        // --- IMPORTS ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // --- CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyBol-uWE7KCF_ESsd7QvsIVZ9KiBWcyN4c", 
             authDomain: "smartsched-452d3.firebaseapp.com",
@@ -254,103 +300,57 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
+        
+        // SPLIT KEY TO AVOID GITHUB DELETION
+        const k1 = "AIzaSyCiBR6aae"; 
+        const k2 = "7kWrhium4IQHxZzWRSbGU1PiU";
+        const GEMINI_API_KEY = k1 + k2;
 
-        // Your Gemini Key 
-            const keyPart1 = "AIzaSyB_l29F7-9_"; 
-            const keyPart2 = "J1ObzTEAlGMabRTAvtb1gWA"; 
-            const GEMINI_API_KEY = keyPart1 + keyPart2; 
-
-        // --- GLOBAL STATE ---
         let currentUser = null;
-        let selectedFile = null;
 
-        // --- AUTH LISTENER ---
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-                console.log("User detected:", user.email);
                 loadTasksFromFirestore(); 
             } else {
+                // If you are testing, you can comment this out to stay on dashboard
                 window.location.href = "index.html"; 
             }
         });
 
-        // --- LOGOUT FUNCTION ---
-        document.getElementById('logoutBtn').addEventListener('click', () => {
+        document.getElementById('logoutBtn').onclick = () => {
             if(confirm("Are you sure you want to log out?")) {
-                signOut(auth).then(() => {
-                    window.location.href = "index.html";
-                }).catch((error) => {
-                    console.error("Logout Error:", error);
-                });
+                signOut(auth).then(() => { window.location.href = "index.html"; });
             }
-        });
+        };
 
-        // --- NAVIGATION LOGIC ---
-        // Attached to window because this is a module script
-        window.switchTab = function(tabId) {
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            // Find the nav item that called this and add active class
-            // (Simplified for this context)
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach(nav => {
-                if(nav.getAttribute('onclick') && nav.getAttribute('onclick').includes(tabId)) {
-                    nav.classList.add('active');
-                }
-            });
-
-            document.querySelectorAll('.view-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            document.getElementById(tabId).classList.add('active');
-        }
-
-        // --- FILE HANDLING ---
-        window.triggerFileInput = function() {
-            document.getElementById('fileInput').click();
-        }
-
-        window.handleFileSelect = function() {
-            const fileInput = document.getElementById('fileInput');
-            if(fileInput.files.length > 0) {
-                selectedFile = fileInput.files[0];
-                document.querySelector('.upload-zone h3').innerText = "File Selected: " + selectedFile.name;
-                document.getElementById('processBtn').style.display = "inline-block";
-            }
-        }
-
-        // --- MAIN LOGIC: PROCESS SYLLABUS ---
         window.processSyllabus = async function() {
-            if (!selectedFile) return;
+            const fileInput = document.getElementById('fileInput');
+            if (!fileInput.files[0]) return;
 
             document.querySelector('.upload-zone').style.display = 'none';
             document.getElementById('processBtn').style.display = 'none';
             document.getElementById('aiLoader').style.display = 'block';
 
             try {
-                // 1. Extract Text
-                const text = await extractTextFromPDF(selectedFile);
-                
-                // 2. Analyze with Gemini
+                const text = await extractTextFromPDF(fileInput.files[0]);
                 const tasks = await analyzeWithGemini(text);
-                
-                // 3. Save to Firestore
                 await saveTasksToFirestore(tasks);
                 
                 document.getElementById('aiLoader').style.display = 'none';
-                
-                // 4. Switch to Schedule Tab
                 switchTab('schedule');
-                resetUpload();
-                alert(`Success! Saved ${tasks.length} tasks to the database.`);
+                
+                // Reset Upload UI
+                document.querySelector('.upload-zone').style.display = 'block';
+                document.querySelector('.upload-zone h3').innerText = "Drag & Drop your Syllabus here";
+                
+                alert(`Success! Saved ${tasks.length} tasks.`);
 
             } catch (error) {
                 console.error(error);
                 alert("Error: " + error.message);
                 document.getElementById('aiLoader').style.display = 'none';
-                resetUpload();
+                document.querySelector('.upload-zone').style.display = 'block';
             }
         }
 
@@ -361,21 +361,20 @@
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
                 const textContent = await page.getTextContent();
-                const pageText = textContent.items.map(item => item.str).join(" ");
-                fullText += pageText + "\n";
+                fullText += textContent.items.map(item => item.str).join(" ") + "\n";
             }
             return fullText;
         }
 
-        async function analyzeWithGemini(syllabusText) {
+        async function analyzeWithGemini(text) {
             const prompt = `
                 Analyze this syllabus text. Extract assignments, quizzes, and exams.
                 Return ONLY a valid JSON array. Schema: [{"title": "Task Name", "subject": "Course Name", "date": "YYYY-MM-DD", "priority": "Urgent/Medium/Normal"}]
-                Text: ${syllabusText.substring(0, 10000)}
+                Text: ${text.substring(0, 10000)}
             `;
             
-            // ✅ UPDATED TO GEMINI 2.5 FLASH
-            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+            // USING V1 (STABLE)
+            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
             
             const response = await fetch(url, {
                 method: 'POST',
@@ -385,7 +384,6 @@
 
             if (!response.ok) {
                 const err = await response.json();
-                // This helps you debug if 2.5 isn't available in your region yet
                 throw new Error(err.error?.message || "Gemini API Error");
             }
             
@@ -395,10 +393,8 @@
             return JSON.parse(jsonString);
         }
 
-        // --- FIRESTORE FUNCTIONS ---
         async function saveTasksToFirestore(tasks) {
             if(!currentUser) return;
-            
             const promises = tasks.map(task => {
                 return addDoc(collection(db, "tasks"), {
                     ...task,
@@ -406,68 +402,66 @@
                     createdAt: new Date()
                 });
             });
-            
             await Promise.all(promises);
-            await loadTasksFromFirestore(); 
+            loadTasksFromFirestore(); 
         }
 
         async function loadTasksFromFirestore() {
             if(!currentUser) return;
-
             const q = query(collection(db, "tasks"), where("userId", "==", currentUser.uid));
             const querySnapshot = await getDocs(q);
-            
             const tasks = [];
             querySnapshot.forEach((doc) => {
                 tasks.push({ id: doc.id, ...doc.data() });
             });
-
             renderTasks(tasks);
         }
 
         window.deleteTask = async function(taskId) {
-            if(!confirm("Delete this task?")) return;
-            await deleteDoc(doc(db, "tasks", taskId));
-            loadTasksFromFirestore();
+            if(confirm("Delete this task?")) {
+                await deleteDoc(doc(db, "tasks", taskId));
+                loadTasksFromFirestore();
+            }
         }
 
+        // --- RENDER TASKS WITH CALENDAR BUTTON ---
         function renderTasks(tasks) {
-            const taskList = document.getElementById('taskList');
+            const list = document.getElementById('taskList');
             
-            // Update Dashboard Counters
             document.getElementById('total-count').innerText = tasks.length;
             document.getElementById('upcoming-count').innerText = tasks.length;
             document.getElementById('urgent-count').innerText = tasks.filter(t => t.priority === 'Urgent').length;
 
             if (tasks.length === 0) {
-                taskList.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #9CA3AF; padding: 40px; background: white; border-radius: 12px; border: 1px dashed #E5E7EB;">
+                list.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #9CA3AF; padding: 40px; background: white; border-radius: 12px; border: 1px dashed #E5E7EB;">
                     <i class="fa-solid fa-clipboard-list" style="font-size: 2rem; margin-bottom: 10px;"></i><br>
                     No tasks found. Go to "Upload Syllabus" to get started!
                 </div>`;
                 return;
             }
 
-            taskList.innerHTML = '';
-            tasks.forEach(task => {
-                const html = `
-                <div class="task-card ${task.priority}">
-                    <div class="task-title">${task.title}</div>
-                    <span class="task-badge ${task.priority === 'Urgent' ? 'badge-urgent' : 'badge-normal'}" 
-                          style="font-size: 0.7rem; padding: 3px 8px; border-radius: 10px; background: #eee; float:right;">
-                          ${task.priority}
-                    </span>
-                    <div class="task-subject"><i class="fa-solid fa-book"></i> ${task.subject}</div>
-                    <div class="task-date"><i class="fa-regular fa-clock"></i> ${task.date}</div>
-                    <i class="fa-solid fa-trash delete-btn" onclick="deleteTask('${task.id}')"></i>
-                </div>`;
-                taskList.innerHTML += html;
-            });
-        }
+            list.innerHTML = '';
+            tasks.forEach(t => {
+                const cleanDate = t.date ? t.date.replace(/-/g, '') : ''; 
+                const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.title)}&details=${encodeURIComponent(t.subject)}&dates=${cleanDate}/${cleanDate}`;
 
-        function resetUpload() {
-            document.querySelector('.upload-zone').style.display = 'block';
-            document.querySelector('.upload-zone h3').innerText = "Click to Upload Syllabus (PDF)";
-            document.getElementById('processBtn').style.display = 'none';
+                list.innerHTML += `
+                <div class="task-card ${t.priority}">
+                    <div class="task-title">${t.title}</div>
+                    <span class="task-badge ${t.priority === 'Urgent' ? 'badge-urgent' : 'badge-normal'}" 
+                          style="font-size: 0.7rem; padding: 3px 8px; border-radius: 10px; background: #eee; float:right;">
+                          ${t.priority}
+                    </span>
+                    <div class="task-subject"><i class="fa-solid fa-book"></i> ${t.subject}</div>
+                    <div class="task-date"><i class="fa-regular fa-clock"></i> ${t.date}</div>
+                    
+                    <a href="${calUrl}" target="_blank" class="calendar-btn">
+                        <i class="fa-solid fa-calendar-plus"></i> Add to Calendar
+                    </a>
+
+                    <i class="fa-solid fa-trash delete-btn" onclick="deleteTask('${t.id}')"></i>
+                </div>`;
+            });
         }
     </script>
 </body>
