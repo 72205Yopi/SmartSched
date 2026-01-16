@@ -12,6 +12,7 @@
 
     <style>
         /* --- EDIT MODAL STYLES (New) --- */
+        
         .modal-overlay {
             display: none; /* Hidden by default */
             position: fixed;
@@ -109,6 +110,30 @@
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* --- NEW CORNER EDIT BUTTON --- */
+        .edit-btn-corner {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;     /* Circle shape */
+            background: #F3F4F6;    /* Light Gray */
+            border: 1px solid #E5E7EB;
+            color: #4B5563;         /* Dark Gray Icon */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+
+        .edit-btn-corner:hover {
+            background: #DBEAFE;    /* Light Blue on hover */
+            color: #2563EB;         /* Blue Icon */
+            border-color: #BFDBFE;
+        }
     </style>
 </head>
 <body>
