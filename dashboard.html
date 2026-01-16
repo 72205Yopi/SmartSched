@@ -11,123 +11,100 @@
     <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 
     <style>
-        /* --- BUTTON CONTAINER --- */
-        .card-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        /* --- 1. CALENDAR BUTTON --- */
-        .calendar-btn {
-            display: flex;
-            align-items: center;
+        /* --- EDIT MODAL STYLES (New) --- */
+        .modal-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
             justify-content: center;
-            flex: 1; /* Grow to fill space */
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .modal-header { font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; color: #1F2937; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 0.9rem; margin-bottom: 5px; color: #6B7280; }
+        .form-group input, .form-group select {
+            width: 100%;
             padding: 10px;
-            background-color: #4F46E5;
-            color: white !important;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 0.9rem;
-            border: 1px solid #4338ca;
-            cursor: pointer;
-            gap: 8px;
-            transition: all 0.2s;
+            border: 1px solid #D1D5DB;
+            border-radius: 6px;
+            font-size: 1rem;
         }
-        .calendar-btn:hover { background-color: #3730a3; transform: translateY(-1px); }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-save { background: #4F46E5; color: white; border: none; padding: 10px; border-radius: 6px; flex: 1; cursor: pointer; }
+        .btn-cancel { background: #E5E7EB; color: #374151; border: none; padding: 10px; border-radius: 6px; flex: 1; cursor: pointer; }
 
-        /* --- 2. CHECK (DONE) BUTTON --- */
+        /* --- BUTTONS --- */
+        .card-actions { display: flex; gap: 8px; margin-top: 15px; }
+
+        .calendar-btn {
+            display: flex; align-items: center; justify-content: center; flex: 1;
+            padding: 8px; background-color: #4F46E5; color: white !important;
+            border-radius: 6px; text-decoration: none; font-size: 0.85rem; cursor: pointer;
+        }
+        /* Edit Button (Blue) */
+        .edit-btn-inline {
+            display: flex; align-items: center; justify-content: center; padding: 8px 12px;
+            background-color: #DBEAFE; color: #2563EB; border: 1px solid #BFDBFE;
+            border-radius: 6px; cursor: pointer; transition: 0.2s;
+        }
+        .edit-btn-inline:hover { background-color: #2563EB; color: white; }
+
+        /* Check Button (Green) */
         .check-btn-inline {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px 14px;
-            background-color: #D1FAE5; /* Light Green */
-            color: #10B981;           /* Green Icon */
-            border: 1px solid #A7F3D0;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 1rem;
+            display: flex; align-items: center; justify-content: center; padding: 8px 12px;
+            background-color: #D1FAE5; color: #10B981; border: 1px solid #A7F3D0;
+            border-radius: 6px; cursor: pointer; transition: 0.2s;
         }
-        .check-btn-inline:hover {
-            background-color: #10B981;
-            color: white;
-        }
-        /* Style when task is actually done (Solid Green) */
-        .check-btn-inline.active {
-            background-color: #10B981;
-            color: white;
-            border-color: #059669;
-        }
+        .check-btn-inline:hover { background-color: #10B981; color: white; }
+        .check-btn-inline.active { background-color: #10B981; color: white; }
 
-        /* --- 3. DELETE BUTTON --- */
+        /* Delete Button (Red) */
         .delete-btn-inline {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px 14px;
-            background-color: #FEE2E2;
-            color: #EF4444;
-            border: 1px solid #FECACA;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 1rem;
+            display: flex; align-items: center; justify-content: center; padding: 8px 12px;
+            background-color: #FEE2E2; color: #EF4444; border: 1px solid #FECACA;
+            border-radius: 6px; cursor: pointer; transition: 0.2s;
         }
         .delete-btn-inline:hover { background-color: #EF4444; color: white; }
 
-        /* --- COMPLETED TASK VISUALS --- */
-        .task-card.done {
-            opacity: 0.6;
-            background-color: #F9FAFB;
-            border-left-color: #9CA3AF !important; /* Gray Border */
-        }
-        .task-card.done .task-title {
-            text-decoration: line-through;
-            color: #6B7280;
-        }
+        .task-card.done { opacity: 0.6; background-color: #F9FAFB; border-left-color: #9CA3AF !important; }
+        .task-card.done .task-title { text-decoration: line-through; color: #6B7280; }
 
         /* --- STANDARD STYLES --- */
-        :root {
-            --primary: #4F46E5; --secondary: #E0E7FF; --dark: #1F2937;
-            --light: #F3F4F6; --white: #ffffff; --success: #10B981; --urgent: #EF4444;
-        }
+        :root { --primary: #4F46E5; --secondary: #E0E7FF; --dark: #1F2937; --light: #F3F4F6; --white: #ffffff; --success: #10B981; --urgent: #EF4444; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body { display: flex; height: 100vh; background-color: var(--light); color: var(--dark); }
-
         .sidebar { width: 250px; background-color: var(--white); border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; padding: 20px; }
         .logo { font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 40px; display: flex; align-items: center; gap: 10px; }
         .nav-item { padding: 12px 15px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; color: #6B7280; font-weight: 500; transition: all 0.3s; display: flex; align-items: center; gap: 10px; }
         .nav-item:hover, .nav-item.active { background-color: var(--secondary); color: var(--primary); }
-
         .main-content { flex: 1; padding: 40px; overflow-y: auto; }
         .header { margin-bottom: 30px; }
         .header h1 { font-size: 1.8rem; margin-bottom: 5px; }
-        .header p { color: #6B7280; }
-
         .view-section { display: none; animation: fadeIn 0.4s ease; }
         .view-section.active { display: block; }
-
         .upload-zone { border: 2px dashed #9CA3AF; border-radius: 12px; padding: 50px; text-align: center; background-color: var(--white); transition: 0.3s; cursor: pointer; }
         .upload-zone:hover { border-color: var(--primary); background-color: #F9FAFB; }
         .upload-icon { font-size: 3rem; color: #9CA3AF; margin-bottom: 15px; }
-
         .btn-primary { background-color: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 1rem; cursor: pointer; margin-top: 20px; transition: 0.2s; }
         .btn-primary:hover { background-color: #4338ca; }
-
         .schedule-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 20px; }
-
         .task-card { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); position: relative; transition: 0.3s; }
         .task-card.Urgent { border-left-color: #EF4444; } 
         .task-card.Medium { border-left-color: #F59E0B; } 
-
         .task-title { font-weight: 600; font-size: 1.1rem; margin-bottom: 5px; }
         .task-subject { color: #6B7280; font-size: 0.9rem; margin-bottom: 15px; }
         .task-date { font-size: 0.85rem; color: #4F46E5; font-weight: 600; display: flex; align-items: center; gap: 5px; }
-
         .loader-container { display: none; text-align: center; margin-top: 50px; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -183,6 +160,36 @@
         </div>
     </div>
 
+    <div id="editModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">Edit Task</div>
+            <div class="form-group">
+                <label>Assignment Title</label>
+                <input type="text" id="editTitle">
+            </div>
+            <div class="form-group">
+                <label>Subject / Course</label>
+                <input type="text" id="editSubject">
+            </div>
+            <div class="form-group">
+                <label>Due Date</label>
+                <input type="date" id="editDate">
+            </div>
+            <div class="form-group">
+                <label>Priority</label>
+                <select id="editPriority">
+                    <option value="Normal">Normal</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Urgent">Urgent</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+                <button class="btn-save" onclick="saveEditTask()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         function switchTab(tabId) {
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
@@ -205,7 +212,6 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        // NOTE: 'updateDoc' is now included in the imports below
         import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
@@ -223,12 +229,13 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
         
-        // --- SPLIT API KEY ---
         const keyPart1 = "AIzaSyB_l29F7-9_"; 
         const keyPart2 = "J1ObzTEAlGMabRTAvtb1gWA"; 
         const GEMINI_API_KEY = keyPart1 + keyPart2;
 
         let currentUser = null;
+        let globalTasks = []; // Store tasks locally to populate edit modal
+        let editingTaskId = null;
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -305,7 +312,7 @@
             const promises = tasks.map(task => addDoc(collection(db, "tasks"), { 
                 ...task, 
                 userId: currentUser.uid, 
-                isCompleted: false, // Default status
+                isCompleted: false,
                 createdAt: new Date() 
             }));
             await Promise.all(promises);
@@ -316,19 +323,14 @@
             if(!currentUser) return;
             const q = query(collection(db, "tasks"), where("userId", "==", currentUser.uid));
             const querySnapshot = await getDocs(q);
-            const tasks = [];
-            querySnapshot.forEach((doc) => tasks.push({ id: doc.id, ...doc.data() }));
-            renderTasks(tasks);
+            globalTasks = []; // Reset global store
+            querySnapshot.forEach((doc) => globalTasks.push({ id: doc.id, ...doc.data() }));
+            renderTasks(globalTasks);
         }
 
-        // --- NEW: TOGGLE DONE STATUS ---
         window.toggleComplete = async function(taskId, currentStatus) {
-            // Optimistic UI Update (Visual change before DB confirms)
-            // (Optional, but makes it feel faster. For now we wait for DB to reload)
             const taskRef = doc(db, "tasks", taskId);
-            await updateDoc(taskRef, {
-                isCompleted: !currentStatus
-            });
+            await updateDoc(taskRef, { isCompleted: !currentStatus });
             loadTasksFromFirestore();
         }
 
@@ -339,10 +341,45 @@
             }
         }
 
+        // --- EDIT FUNCTIONS ---
+        window.openEditModal = function(taskId) {
+            const task = globalTasks.find(t => t.id === taskId);
+            if(!task) return;
+
+            editingTaskId = taskId;
+            document.getElementById('editTitle').value = task.title;
+            document.getElementById('editSubject').value = task.subject;
+            document.getElementById('editDate').value = task.date;
+            document.getElementById('editPriority').value = task.priority;
+
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        window.closeEditModal = function() {
+            document.getElementById('editModal').style.display = 'none';
+            editingTaskId = null;
+        }
+
+        window.saveEditTask = async function() {
+            if(!editingTaskId) return;
+
+            const updatedData = {
+                title: document.getElementById('editTitle').value,
+                subject: document.getElementById('editSubject').value,
+                date: document.getElementById('editDate').value,
+                priority: document.getElementById('editPriority').value
+            };
+
+            const taskRef = doc(db, "tasks", editingTaskId);
+            await updateDoc(taskRef, updatedData);
+            
+            closeEditModal();
+            loadTasksFromFirestore();
+        }
+
         function renderTasks(tasks) {
             const list = document.getElementById('taskList');
             
-            // Stats Counts (Only count active tasks as "Upcoming")
             const activeTasks = tasks.filter(t => !t.isCompleted);
             document.getElementById('total-count').innerText = tasks.length;
             document.getElementById('upcoming-count').innerText = activeTasks.length;
@@ -357,15 +394,12 @@
             }
 
             list.innerHTML = '';
-            
-            // Sort: Active tasks first, Done tasks last
             tasks.sort((a, b) => (a.isCompleted === b.isCompleted) ? 0 : a.isCompleted ? 1 : -1);
 
             tasks.forEach(t => {
                 const cleanDate = t.date ? t.date.replace(/-/g, '') : ''; 
                 const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.title)}&details=${encodeURIComponent(t.subject)}&dates=${cleanDate}/${cleanDate}`;
                 
-                // Determine Visual State
                 const cardClass = t.isCompleted ? 'task-card done' : `task-card ${t.priority}`;
                 const checkBtnClass = t.isCompleted ? 'check-btn-inline active' : 'check-btn-inline';
 
@@ -383,9 +417,13 @@
                     
                     <div class="card-actions">
                         <a href="${calUrl}" target="_blank" class="calendar-btn">
-                            <i class="fa-solid fa-calendar-plus"></i> Calendar
+                            <i class="fa-solid fa-calendar-plus"></i> Cal
                         </a>
                         
+                        <button class="edit-btn-inline" onclick="openEditModal('${t.id}')">
+                            <i class="fa-solid fa-pencil"></i>
+                        </button>
+
                         <button class="${checkBtnClass}" onclick="toggleComplete('${t.id}', ${t.isCompleted})">
                             <i class="fa-solid fa-check"></i>
                         </button>
