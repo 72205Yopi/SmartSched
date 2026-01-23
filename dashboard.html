@@ -644,7 +644,8 @@ import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/fi
             document.querySelector('.upload-zone h3').innerText = "Click to Upload Syllabus (PDF)";
             document.getElementById('processBtn').style.display = 'none';
         }
-        async function markAsDone(taskId) {
+        // EXPOSE FUNCTION TO WINDOW SO HTML CAN SEE IT
+        window.markAsDone = async function(taskId) {
             const taskElement = document.getElementById(taskId);
 
             // Small animation
@@ -653,15 +654,13 @@ import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/fi
                 taskElement.style.opacity = "0";
             }
 
-            // ✅ MARK AS COMPLETED (NOT DELETE)
+            // Update Database
             await updateDoc(doc(db, "tasks", taskId), {
                 completed: true
             });
 
-            // Reload tasks + dashboard counters
+            // Reload tasks
             loadTasksFromFirestore();
-
-            // Toast feedback
             showToast("Task marked as completed ✅");
         }
 
