@@ -592,51 +592,65 @@ import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/fi
 }
 
         function renderTasks(tasks) {
+            const activeList = document.getElementById('taskList');
+            const completedList = document.getElementById('completedTaskList');
+            
+            // Filter the tasks
             const activeTasks = tasks.filter(t => !t.completed);
             const completedTasks = tasks.filter(t => t.completed);
 
-            const taskList = document.getElementById('taskList');
+            // Update the Dashboard Counters
             const today = new Date().toISOString().split("T")[0];
-
-            
-            // Update Dashboard Counters
             document.getElementById('total-count').innerText = tasks.length;
-            document.getElementById('upcoming-count').innerText =
-                tasks.filter(t => t.date >= today).length;
+            document.getElementById('upcoming-count').innerText = tasks.filter(t => t.date >= today).length;
             document.getElementById('urgent-count').innerText = tasks.filter(t => t.priority === 'Urgent').length;
 
+            // --- RENDER ACTIVE TASKS ---
             if (activeTasks.length === 0) {
-                taskList.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #9CA3AF; padding: 40px; background: white; border-radius: 12px; border: 1px dashed #E5E7EB;">
+                activeList.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #9CA3AF; padding: 40px; background: white; border-radius: 12px; border: 1px dashed #E5E7EB;">
                     <i class="fa-solid fa-clipboard-list" style="font-size: 2rem; margin-bottom: 10px;"></i><br>
-                    No tasks found. Go to "Upload Syllabus" to get started!
+                    No active tasks. Good job!
                 </div>`;
-                return;
+            } else {
+                activeList.innerHTML = '';
+                activeTasks.forEach(task => {
+                    const html = `
+                    <div class="task-card ${task.priority}" id="${task.id}">
+                        <div class="task-title">${task.title}</div>
+                        <span class="task-badge ${task.priority === 'Urgent' ? 'badge-urgent' : 'badge-normal'}" 
+                              style="font-size: 0.7rem; padding: 3px 8px; border-radius: 10px; background: #eee; float:right;">
+                              ${task.priority}
+                        </span>
+                        <div class="task-subject"><i class="fa-solid fa-book"></i> ${task.subject}</div>
+                        <div class="task-date"><i class="fa-regular fa-clock"></i> ${task.date}</div>
+                        <i class="fa-solid fa-trash delete-btn" onclick="deleteTask('${task.id}')"></i>
+                        <div class="task-overlay">
+                            <p class="overlay-desc">Mark as done?</p>
+                            <button class="btn-finish" onclick="markAsDone('${task.id}')">
+                                <i class="fa-solid fa-check"></i> Finish Task
+                            </button>
+                        </div>
+                    </div>`;
+                    activeList.innerHTML += html;
+                });
             }
 
-            taskList.innerHTML = '';
-            activeTasks.forEach(task => {
-                const html = `
-                <div class="task-card ${task.priority}" id="${task.id}">
-                    <div class="task-title">${task.title}</div>
-                    <span class="task-badge ${task.priority === 'Urgent' ? 'badge-urgent' : 'badge-normal'}" 
-                          style="font-size: 0.7rem; padding: 3px 8px; border-radius: 10px; background: #eee; float:right;">
-                          ${task.priority}
-                    </span>
-                    <div class="task-subject"><i class="fa-solid fa-book"></i> ${task.subject}</div>
-                    <div class="task-date"><i class="fa-regular fa-clock"></i> ${task.date}</div>
-                    <i class="fa-solid fa-trash delete-btn" onclick="deleteTask('${task.id}')"></i>
-                    <div class="task-overlay">
-                        <p class="overlay-desc">
-                            Mark this task as completed once you’re done.
-                        </p>
-
-                        <button class="btn-finish" onclick="markAsDone('${task.id}')">
-                            <i class="fa-solid fa-check"></i> Finish Task
-                        </button>
-                    </div>
-                </div>`;
-                taskList.innerHTML += html;
-            });
+            // ---  RENDER COMPLETED TASKS  ---
+            if (completedTasks.length === 0) {
+                completedList.innerHTML = `<div style="color:#9CA3AF; padding: 20px;">No completed tasks yet.</div>`;
+            } else {
+                completedList.innerHTML = '';
+                completedTasks.forEach(task => {
+                    const html = `
+                    <div class="task-card completed-card" style="opacity: 0.6; background-color: #f9fafb; border-left: 5px solid #9CA3AF;">
+                        <div class="task-title" style="text-decoration: line-through;">${task.title}</div>
+                        <div class="task-subject">${task.subject}</div>
+                        <div class="task-date"><i class="fa-solid fa-check"></i> Completed</div>
+                        <i class="fa-solid fa-trash delete-btn" onclick="deleteTask('${task.id}')" title="Delete Forever"></i>
+                    </div>`;
+                    completedList.innerHTML += html;
+                });
+            }
         }
 
         function resetUpload() {
