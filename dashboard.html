@@ -38,46 +38,52 @@
 
         .schedule-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 20px; }
 
-        /* --- CARD STYLES --- */
+        /* --- UPDATED CARD STYLES (Fixed Bottom Buttons) --- */
         .task-card { 
             background: var(--white); 
             padding: 20px; 
-            border-radius: 16px; /* Softer rounded corners */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); 
+            border-radius: 16px; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); 
             border-left: 6px solid var(--primary); 
             position: relative; 
             overflow: hidden; 
             transition: 0.3s; 
+            
+            /* FLEXBOX MAGIC FOR STICKY FOOTER */
             display: flex;
-            flex-direction: column;
-            justify-content: space-between; /* Pushes footer to bottom */
-            min-height: 200px; /* Ensures consistent height */
+            flex-direction: column; 
+            min-height: 220px; /* Ensure cards are tall enough */
         }
         .task-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         .task-card.Urgent { border-left-color: #EF4444; } 
         .task-card.Medium { border-left-color: #F59E0B; } 
 
-        .task-content { margin-bottom: 15px; } /* Wrapper for text content */
-        
-        .task-title { font-weight: 700; font-size: 1.15rem; margin-bottom: 8px; padding-right: 40px; line-height: 1.3; color: #111827; position: relative; z-index: 1;}
-        .task-subject { color: #6B7280; font-size: 0.9rem; margin-bottom: 12px; font-weight: 500; position: relative; z-index: 1;}
-        .task-date { font-size: 0.85rem; color: #4F46E5; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; background: #EEF2FF; padding: 6px 12px; border-radius: 20px; position: relative; z-index: 1;}
+        /* Content Wrapper (Pushes buttons down) */
+        .task-content { 
+            flex-grow: 1; /* Takes up all available space */
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+        }
 
-        /* --- BEAUTIFIED BUTTONS --- */
+        .task-title { font-weight: 700; font-size: 1.15rem; margin-bottom: 8px; padding-right: 40px; line-height: 1.3; color: #111827; position: relative; z-index: 1;}
+        .task-subject { color: #6B7280; font-size: 0.9rem; margin-bottom: auto; /* Pushes date down if needed */ position: relative; z-index: 1;}
+        .task-date { margin-top: 10px; font-size: 0.85rem; color: #4F46E5; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; background: #EEF2FF; padding: 6px 12px; border-radius: 20px; align-self: flex-start; position: relative; z-index: 1;}
+
+        /* --- BUTTON ROW (Fixed at Bottom) --- */
         .card-actions { 
             display: flex; 
             gap: 12px; 
-            margin-top: auto; 
+            margin-top: auto; /* This forces it to the bottom */
             padding-top: 15px;
-            border-top: 1px solid #F3F4F6; /* Divider line */
+            border-top: 1px solid #F3F4F6; 
             position: relative; 
             z-index: 20; 
         }
         
-        /* Calendar Button (Primary Action) */
         .calendar-btn { 
             display: flex; align-items: center; justify-content: center; 
-            flex: 1; /* Takes remaining space */
+            flex: 1; 
             padding: 10px 16px; 
             background-color: #4F46E5; 
             color: white !important; 
@@ -91,10 +97,9 @@
         }
         .calendar-btn:hover { background-color: #4338ca; transform: translateY(-1px); }
 
-        /* Delete Button (Secondary Action) */
         .delete-btn-inline { 
             display: flex; align-items: center; justify-content: center; 
-            width: 42px; height: 42px; /* Fixed square */
+            width: 42px; height: 42px; 
             background-color: #FEF2F2; 
             color: #EF4444; 
             border: 1px solid #FECACA; 
@@ -104,32 +109,22 @@
         }
         .delete-btn-inline:hover { background-color: #EF4444; color: white; border-color: #EF4444; }
 
-        /* Edit Button (Corner Circle) */
         .edit-btn-corner {
             position: absolute; top: 15px; right: 15px; 
             width: 32px; height: 32px;
-            border-radius: 50%; 
-            background: #fff; 
-            border: 1px solid #E5E7EB; 
-            color: #9CA3AF;
+            border-radius: 50%; background: #fff; border: 1px solid #E5E7EB; color: #9CA3AF;
             display: flex; align-items: center; justify-content: center; 
-            cursor: pointer;
-            z-index: 20; 
-            transition: all 0.2s;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            cursor: pointer; z-index: 20; transition: all 0.2s;
         }
         .edit-btn-corner:hover { background: #F3F4F6; color: #4F46E5; border-color: #C7D2FE; }
 
         /* --- HOVER OVERLAY --- */
         .task-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(17, 24, 39, 0.92); /* Slightly darker/richer */
-            color: white;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(17, 24, 39, 0.92); color: white;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             opacity: 0; transition: opacity 0.3s ease;
-            z-index: 5; 
-            backdrop-filter: blur(2px); /* nice blurry effect */
+            z-index: 5; backdrop-filter: blur(2px);
         }
         .task-card:hover .task-overlay { opacity: 1; }
         
@@ -138,7 +133,6 @@
             border-radius: 30px; cursor: pointer; font-weight: 600; display: flex; 
             align-items: center; gap: 8px; transition: transform 0.2s; 
             position: relative; z-index: 6; font-size: 1rem;
-            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
         }
         .btn-finish:hover { transform: scale(1.05); background-color: #059669; }
 
