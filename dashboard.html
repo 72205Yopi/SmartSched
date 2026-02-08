@@ -38,57 +38,120 @@
 
         .schedule-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 20px; }
 
-        .task-card { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); position: relative; overflow: hidden; transition: 0.3s; }
+        /* --- CARD STYLES --- */
+        .task-card { 
+            background: var(--white); 
+            padding: 20px; 
+            border-radius: 16px; /* Softer rounded corners */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); 
+            border-left: 6px solid var(--primary); 
+            position: relative; 
+            overflow: hidden; 
+            transition: 0.3s; 
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Pushes footer to bottom */
+            min-height: 200px; /* Ensures consistent height */
+        }
+        .task-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         .task-card.Urgent { border-left-color: #EF4444; } 
         .task-card.Medium { border-left-color: #F59E0B; } 
 
-        .task-title { font-weight: 600; font-size: 1.1rem; margin-bottom: 5px; padding-right: 40px; }
-        .task-subject { color: #6B7280; font-size: 0.9rem; margin-bottom: 15px; }
-        .task-date { font-size: 0.85rem; color: #4F46E5; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+        .task-content { margin-bottom: 15px; } /* Wrapper for text content */
+        
+        .task-title { font-weight: 700; font-size: 1.15rem; margin-bottom: 8px; padding-right: 40px; line-height: 1.3; color: #111827; position: relative; z-index: 1;}
+        .task-subject { color: #6B7280; font-size: 0.9rem; margin-bottom: 12px; font-weight: 500; position: relative; z-index: 1;}
+        .task-date { font-size: 0.85rem; color: #4F46E5; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; background: #EEF2FF; padding: 6px 12px; border-radius: 20px; position: relative; z-index: 1;}
 
-        /* --- HOVER OVERLAY STYLES --- */
+        /* --- BEAUTIFIED BUTTONS --- */
+        .card-actions { 
+            display: flex; 
+            gap: 12px; 
+            margin-top: auto; 
+            padding-top: 15px;
+            border-top: 1px solid #F3F4F6; /* Divider line */
+            position: relative; 
+            z-index: 20; 
+        }
+        
+        /* Calendar Button (Primary Action) */
+        .calendar-btn { 
+            display: flex; align-items: center; justify-content: center; 
+            flex: 1; /* Takes remaining space */
+            padding: 10px 16px; 
+            background-color: #4F46E5; 
+            color: white !important; 
+            border-radius: 8px; 
+            text-decoration: none; 
+            font-size: 0.9rem; 
+            font-weight: 600;
+            cursor: pointer; 
+            transition: 0.2s;
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+        }
+        .calendar-btn:hover { background-color: #4338ca; transform: translateY(-1px); }
+
+        /* Delete Button (Secondary Action) */
+        .delete-btn-inline { 
+            display: flex; align-items: center; justify-content: center; 
+            width: 42px; height: 42px; /* Fixed square */
+            background-color: #FEF2F2; 
+            color: #EF4444; 
+            border: 1px solid #FECACA; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            transition: 0.2s; 
+        }
+        .delete-btn-inline:hover { background-color: #EF4444; color: white; border-color: #EF4444; }
+
+        /* Edit Button (Corner Circle) */
+        .edit-btn-corner {
+            position: absolute; top: 15px; right: 15px; 
+            width: 32px; height: 32px;
+            border-radius: 50%; 
+            background: #fff; 
+            border: 1px solid #E5E7EB; 
+            color: #9CA3AF;
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer;
+            z-index: 20; 
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .edit-btn-corner:hover { background: #F3F4F6; color: #4F46E5; border-color: #C7D2FE; }
+
+        /* --- HOVER OVERLAY --- */
         .task-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(31, 41, 55, 0.95);
+            background-color: rgba(17, 24, 39, 0.92); /* Slightly darker/richer */
             color: white;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             opacity: 0; transition: opacity 0.3s ease;
-            z-index: 5; /* Middle Layer */
+            z-index: 5; 
+            backdrop-filter: blur(2px); /* nice blurry effect */
         }
         .task-card:hover .task-overlay { opacity: 1; }
         
-        .overlay-desc { margin-bottom: 15px; color: #D1D5DB; font-size: 0.9rem; }
-        .btn-finish { background-color: #10B981; color: white; border: none; padding: 10px 20px; border-radius: 30px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: transform 0.2s; }
+        .btn-finish { 
+            background-color: #10B981; color: white; border: none; padding: 12px 24px; 
+            border-radius: 30px; cursor: pointer; font-weight: 600; display: flex; 
+            align-items: center; gap: 8px; transition: transform 0.2s; 
+            position: relative; z-index: 6; font-size: 1rem;
+            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+        }
         .btn-finish:hover { transform: scale(1.05); background-color: #059669; }
 
-        /* --- BUTTONS ON TOP (High Z-Index) --- */
-        .edit-btn-corner {
-            position: absolute; top: 12px; right: 12px; width: 32px; height: 32px;
-            border-radius: 50%; background: #F3F4F6; border: 1px solid #E5E7EB; color: #4B5563;
-            display: flex; align-items: center; justify-content: center; cursor: pointer;
-            z-index: 10; /* Top Layer - Above Overlay */
-        }
-        .edit-btn-corner:hover { background: #DBEAFE; color: #2563EB; }
-
-        .card-actions { 
-            display: flex; gap: 8px; margin-top: 15px; 
-            position: relative; z-index: 10; /* Top Layer - Above Overlay */
-        }
-        
-        .calendar-btn { display: flex; align-items: center; justify-content: center; flex: 1; padding: 8px; background-color: #4F46E5; color: white !important; border-radius: 6px; text-decoration: none; font-size: 0.85rem; cursor: pointer; }
-        .delete-btn-inline { display: flex; align-items: center; justify-content: center; padding: 8px 12px; background-color: #FEE2E2; color: #EF4444; border: 1px solid #FECACA; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-        
-        /* --- MODAL STYLES --- */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        /* --- MODAL --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
+        .modal-content { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 400px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 0.9rem; margin-bottom: 5px; color: #6B7280; }
-        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #D1D5DB; border-radius: 6px; font-size: 1rem; }
-        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-        .btn-save { background: #4F46E5; color: white; border: none; padding: 10px; border-radius: 6px; flex: 1; cursor: pointer; }
-        .btn-cancel { background: #E5E7EB; color: #374151; border: none; padding: 10px; border-radius: 6px; flex: 1; cursor: pointer; }
-
+        .form-group label { display: block; font-size: 0.9rem; margin-bottom: 5px; color: #374151; font-weight: 500; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 1rem; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 25px; }
+        .btn-save { background: #4F46E5; color: white; border: none; padding: 10px; border-radius: 8px; flex: 1; cursor: pointer; font-weight: 600; }
+        .btn-cancel { background: white; color: #374151; border: 1px solid #D1D5DB; padding: 10px; border-radius: 8px; flex: 1; cursor: pointer; font-weight: 600; }
+        
         .loader-container { display: none; text-align: center; margin-top: 50px; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -96,7 +159,6 @@
         .toast { position: fixed; bottom: 20px; right: 20px; background: #4F46E5; color: white; padding: 14px 20px; border-radius: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); opacity: 0; transform: translateY(20px); transition: all 0.3s ease; z-index: 2000; font-size: 0.9rem; }
         .toast.show { opacity: 1; transform: translateY(0); }
         
-        /* Mobile */
         .hamburger { display: none; position: fixed; top: 20px; left: 20px; font-size: 1.8rem; cursor: pointer; z-index: 3000; background: white; padding: 8px 12px; border-radius: 8px; box-shadow: 0 5px 10px rgba(0,0,0,0.15); }
         @media (max-width: 768px) { body { flex-direction: column; } .hamburger { display: block; } .sidebar { position: fixed; left: -260px; top: 0; height: 100%; transition: left 0.3s ease; z-index: 2000; background: white; } .sidebar.open { left: 0; } }
     </style>
@@ -116,9 +178,9 @@
         <div id="dashboard" class="view-section active">
             <div class="header"><h1>Hello, Student! 👋</h1><p>Here is your academic overview.</p></div>
             <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                <div class="task-card" style="flex: 1; border-left-color: var(--success);"><h3>Total Tasks</h3><h1 style="font-size: 2.5rem; margin: 10px 0;" id="total-count">0</h1><p style="color: #6B7280;">Saved in Database</p></div>
-                <div class="task-card" style="flex: 1; border-left-color: #F59E0B;"><h3>Upcoming</h3><h1 style="font-size: 2.5rem; margin: 10px 0;" id="upcoming-count">0</h1><p style="color: #6B7280;">Deadlines</p></div>
-                <div class="task-card" style="flex: 1; border-left-color: #EF4444;"><h3>Urgent</h3><h1 style="font-size: 2.5rem; margin: 10px 0;" id="urgent-count">0</h1><p style="color: #6B7280;">High Priority</p></div>
+                <div class="task-card" style="flex: 1; border-left-color: var(--success); min-height: 150px;"><h3>Total Tasks</h3><h1 style="font-size: 2.5rem; margin: 10px 0;" id="total-count">0</h1><p style="color: #6B7280;">Saved in Database</p></div>
+                <div class="task-card" style="flex: 1; border-left-color: #F59E0B; min-height: 150px;"><h3>Upcoming</h3><h1 style="font-size: 2.5rem; margin: 10px 0;" id="upcoming-count">0</h1><p style="color: #6B7280;">Deadlines</p></div>
+                <div class="task-card" style="flex: 1; border-left-color: #EF4444; min-height: 150px;"><h3>Urgent</h3><h1 style="font-size: 2.5rem; margin: 10px 0;" id="urgent-count">0</h1><p style="color: #6B7280;">High Priority</p></div>
             </div>
         </div>
 
@@ -144,7 +206,7 @@
 
     <div id="editModal" class="modal-overlay">
         <div class="modal-content">
-            <div class="modal-header" style="font-weight:bold; margin-bottom:15px; font-size:1.2rem;">Edit Task</div>
+            <div class="modal-header" style="font-weight:bold; margin-bottom:15px; font-size:1.2rem; color: #111827;">Edit Task Details</div>
             <div class="form-group"><label>Assignment Title</label><input type="text" id="editTitle"></div>
             <div class="form-group"><label>Subject / Course</label><input type="text" id="editSubject"></div>
             <div class="form-group"><label>Due Date</label><input type="date" id="editDate"></div>
@@ -340,14 +402,20 @@
                     <div class="task-card ${t.priority}">
                         <button class="edit-btn-corner" onclick="openEditModal('${t.id}')"><i class="fa-solid fa-pencil"></i></button>
 
-                        <div class="task-title">${t.title}</div>
-                        <span class="task-badge ${t.priority === 'Urgent' ? 'badge-urgent' : 'badge-normal'}" style="font-size: 0.7rem; padding: 3px 8px; border-radius: 10px; background: #eee; float:right;">${t.priority}</span>
-                        <div class="task-subject"><i class="fa-solid fa-book"></i> ${t.subject}</div>
-                        <div class="task-date"><i class="fa-regular fa-clock"></i> ${t.date}</div>
+                        <div class="task-content">
+                            <div class="task-title">${t.title}</div>
+                            <span class="task-badge ${t.priority === 'Urgent' ? 'badge-urgent' : 'badge-normal'}" style="font-size: 0.7rem; padding: 3px 8px; border-radius: 10px; background: #eee; float:right;">${t.priority}</span>
+                            <div class="task-subject"><i class="fa-solid fa-book"></i> ${t.subject}</div>
+                            <div class="task-date"><i class="fa-regular fa-clock"></i> ${t.date}</div>
+                        </div>
                         
                         <div class="card-actions">
-                            <a href="${calUrl}" target="_blank" class="calendar-btn"><i class="fa-solid fa-calendar-plus"></i> Cal</a>
-                            <button class="delete-btn-inline" onclick="deleteTask('${t.id}')"><i class="fa-solid fa-trash"></i></button>
+                            <a href="${calUrl}" target="_blank" class="calendar-btn">
+                                <i class="fa-solid fa-calendar-plus" style="font-size: 1rem;"></i> Add to Calendar
+                            </a>
+                            <button class="delete-btn-inline" onclick="deleteTask('${t.id}')">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
                         </div>
 
                         <div class="task-overlay">
@@ -367,9 +435,11 @@
                 completedTasks.forEach(t => {
                     completedList.innerHTML += `
                     <div class="task-card completed-card" style="opacity: 0.6; background-color: #f9fafb; border-left: 5px solid #9CA3AF;">
-                        <div class="task-title" style="text-decoration: line-through;">${t.title}</div>
-                        <div class="task-subject">${t.subject}</div>
-                        <div class="task-date">Completed</div>
+                        <div class="task-content">
+                            <div class="task-title" style="text-decoration: line-through;">${t.title}</div>
+                            <div class="task-subject">${t.subject}</div>
+                            <div class="task-date">Completed</div>
+                        </div>
                         <div class="card-actions">
                             <button class="delete-btn-inline" onclick="deleteTask('${t.id}')"><i class="fa-solid fa-trash"></i></button>
                         </div>
