@@ -444,6 +444,7 @@
         const activeTasks = tasks.filter(t => !t.completed);
         const completedTasks = tasks.filter(t => t.completed);
 
+        // Update Counters
         document.getElementById('total-count').innerText = tasks.length;
         document.getElementById('upcoming-count').innerText = activeTasks.length;
         document.getElementById('urgent-count').innerText = tasks.filter(t => t.priority === 'Urgent' && !t.completed).length;
@@ -456,7 +457,13 @@
                 const cleanDate = t.date ? t.date.replace(/-/g, '') : ''; 
                 const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.title)}&details=${encodeURIComponent(t.subject)}&dates=${cleanDate}/${cleanDate}`;
 
-                // 1. Generate Checklist HTML
+                // --- 1. SMART LINKS LOGIC ---
+                // We combine Subject + Title + "Tutorial" for the best results
+                const searchQuery = encodeURIComponent(`${t.subject} ${t.title} tutorial`);
+                const googleUrl = `https://www.google.com/search?q=${searchQuery}`;
+                const ytUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
+
+                // --- 2. Subtasks HTML ---
                 let subtasksHtml = '';
                 if (t.subtasks && t.subtasks.length > 0) {
                     subtasksHtml = `
@@ -471,7 +478,7 @@
                     </div>`;
                 }
 
-                // 2. Get Time Estimate (Default to 'TBD' if missing)
+                // --- 3. Time Estimate ---
                 const timeEst = t.estimated_time || "TBD";
 
                 const html = `
@@ -494,13 +501,22 @@
 
                         <div class="task-subject"><i class="fa-solid fa-book"></i> ${t.subject}</div>
                         <div class="task-date"><i class="fa-regular fa-clock"></i> ${t.date}</div>
+
+                        <div style="display: flex; gap: 10px; margin-top: 12px;">
+                            <a href="${googleUrl}" target="_blank" style="text-decoration: none; flex: 1; background: #EFF6FF; color: #1D4ED8; padding: 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; text-align: center; border: 1px solid #DBEAFE; transition: 0.2s;">
+                                <i class="fa-brands fa-google"></i> Google It
+                            </a>
+                            <a href="${ytUrl}" target="_blank" style="text-decoration: none; flex: 1; background: #FEF2F2; color: #B91C1C; padding: 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; text-align: center; border: 1px solid #FECACA; transition: 0.2s;">
+                                <i class="fa-brands fa-youtube"></i> Watch Video
+                            </a>
+                        </div>
                         
                         ${subtasksHtml}
                     </div>
                     
                     <div class="card-actions">
                         <a href="${calUrl}" target="_blank" class="calendar-btn" aria-label="Add to Google Calendar" tabindex="0">
-                            <i class="fa-solid fa-calendar-plus" style="font-size: 1rem;"></i> Add to Calendar
+                            <i class="fa-solid fa-calendar-plus" style="font-size: 1rem;"></i> Calendar
                         </a>
                         <button class="delete-btn-inline" onclick="deleteTask('${t.id}')" aria-label="Delete Task" tabindex="0">
                             <i class="fa-solid fa-trash"></i>
@@ -538,26 +554,6 @@
             });
         }
     }
-
-            if (completedTasks.length === 0) completedList.innerHTML = `<div style="color:#9CA3AF; padding: 20px;">No completed tasks yet.</div>`;
-            else {
-                completedList.innerHTML = '';
-                completedTasks.forEach(t => {
-                    completedList.innerHTML += `
-                    <div class="task-card completed-card" style="opacity: 0.6; background-color: #f9fafb; border-left: 5px solid #9CA3AF;" tabindex="0">
-                        <div class="task-content">
-                            <div class="task-title" style="text-decoration: line-through;">${t.title}</div>
-                            <div class="task-subject">${t.subject}</div>
-                            <div class="task-date">Completed</div>
-                        </div>
-                        <div class="card-actions">
-                            <button class="delete-btn-inline" onclick="deleteTask('${t.id}')" aria-label="Delete Task" tabindex="0">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>`;
-                });
-            }
         
 
         function resetUpload() {
