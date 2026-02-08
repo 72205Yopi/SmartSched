@@ -344,39 +344,38 @@
         }
 
         async function analyzeWithGemini(syllabusText) {
-            // ✅ PERSON A TASK 1: Updated Prompt to ask for "subtasks" checklist
-            const prompt = `
-                Analyze this syllabus text. Extract assignments, quizzes, and exams.
-                
-                For any major task (like a Project, Paper, or Exam), generate a logical checklist of "subtasks" to help the student complete it.
-                (e.g., A "Final Project" might need: ["Choose Topic", "Research", "Create Outline", "Drafting", "Final Review"]).
-                
-                Return ONLY a valid JSON array. 
-                Schema: [{"title": "Task Name", "subject": "Course Name", "date": "YYYY-MM-DD", "priority": "Urgent/Medium/Normal", "subtasks": ["Step 1", "Step 2", "Step 3"]}]
-                
-                Text: ${syllabusText.substring(0, 10000)}
-            `;
+        // ✅ UPDATED PROMPT: Asks for 'subtasks' AND 'estimated_time'
+        const prompt = `
+            Analyze this syllabus text. Extract assignments, quizzes, and exams.
             
-            // ✅ USING GEMINI 2.5 FLASH (Fast & Smart)
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+            1. For major tasks, generate a "subtasks" checklist.
+            2. Estimate the time required to complete the task based on its complexity (e.g., "2 hours", "45 mins", "10 hours").
             
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            });
+            Return ONLY a valid JSON array. 
+            Schema: [{"title": "Task Name", "subject": "Course Name", "date": "YYYY-MM-DD", "priority": "Urgent/Medium/Normal", "subtasks": ["Step 1", "Step 2"], "estimated_time": "2 hours"}]
+            
+            Text: ${syllabusText.substring(0, 10000)}
+        `;
+        
+        // Using Gemini 2.5 Flash
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
 
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error?.message || "Gemini API Error");
-            }
-            
-            const data = await response.json();
-            const aiText = data.candidates[0].content.parts[0].text;
-            // Clean up code blocks if AI adds them
-            const jsonString = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
-            return JSON.parse(jsonString);
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error?.message || "Gemini API Error");
         }
+        
+        const data = await response.json();
+        const aiText = data.candidates[0].content.parts[0].text;
+        const jsonString = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
+        return JSON.parse(jsonString);
+    }
 
         async function saveTasksToFirestore(tasks) {
             if(!currentUser) return;
@@ -440,72 +439,105 @@
         }
 
         function renderTasks(tasks) {
-            const activeList = document.getElementById('taskList');
-            const completedList = document.getElementById('completedTaskList');
-            const activeTasks = tasks.filter(t => !t.completed);
-            const completedTasks = tasks.filter(t => t.completed);
+        const activeList = document.getElementById('taskList');
+        const completedList = document.getElementById('completedTaskList');
+        const activeTasks = tasks.filter(t => !t.completed);
+        const completedTasks = tasks.filter(t => t.completed);
 
-            document.getElementById('total-count').innerText = tasks.length;
-            document.getElementById('upcoming-count').innerText = activeTasks.length;
-            document.getElementById('urgent-count').innerText = tasks.filter(t => t.priority === 'Urgent' && !t.completed).length;
+        document.getElementById('total-count').innerText = tasks.length;
+        document.getElementById('upcoming-count').innerText = activeTasks.length;
+        document.getElementById('urgent-count').innerText = tasks.filter(t => t.priority === 'Urgent' && !t.completed).length;
 
-            if (activeTasks.length === 0) {
-                activeList.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #9CA3AF; padding: 40px; background: white; border-radius: 12px; border: 1px dashed #E5E7EB;"><i class="fa-solid fa-clipboard-list" style="font-size: 2rem; margin-bottom: 10px;"></i><br>No active tasks.</div>`;
-            } else {
-                activeList.innerHTML = '';
-                activeTasks.forEach(t => {
-                    const cleanDate = t.date ? t.date.replace(/-/g, '') : ''; 
-                    const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.title)}&details=${encodeURIComponent(t.subject)}&dates=${cleanDate}/${cleanDate}`;
+        if (activeTasks.length === 0) {
+            activeList.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #9CA3AF; padding: 40px; background: white; border-radius: 12px; border: 1px dashed #E5E7EB;"><i class="fa-solid fa-clipboard-list" style="font-size: 2rem; margin-bottom: 10px;"></i><br>No active tasks.</div>`;
+        } else {
+            activeList.innerHTML = '';
+            activeTasks.forEach(t => {
+                const cleanDate = t.date ? t.date.replace(/-/g, '') : ''; 
+                const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.title)}&details=${encodeURIComponent(t.subject)}&dates=${cleanDate}/${cleanDate}`;
 
-                    // --- PERSON A TASK 1: Generate the Checklist HTML ---
-                    let subtasksHtml = '';
-                    if (t.subtasks && t.subtasks.length > 0) {
-                        subtasksHtml = `
-                        <div style="margin-top: 15px; background: #F9FAFB; padding: 12px; border-radius: 8px; border: 1px solid #E5E7EB;">
-                            <p style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6B7280; font-weight: 700; margin-bottom: 8px;">Suggested Steps</p>
-                            ${t.subtasks.map(step => `
-                                <div style="display: flex; gap: 8px; align-items: start; margin-bottom: 6px; font-size: 0.85rem; color: #374151;">
-                                    <i class="fa-regular fa-square-check" style="color: #9CA3AF; margin-top: 3px;"></i>
-                                    <span style="line-height: 1.4;">${step}</span>
-                                </div>
-                            `).join('')}
-                        </div>`;
-                    }
-
-                    const html = `
-                    <div class="task-card ${t.priority}" tabindex="0">
-                        <button class="edit-btn-corner" onclick="openEditModal('${t.id}')" aria-label="Edit Task" tabindex="0">
-                            <i class="fa-solid fa-pencil"></i>
-                        </button>
-
-                        <div class="task-content">
-                            <div class="task-title">${t.title}</div>
-                            <span class="task-badge ${t.priority === 'Urgent' ? 'badge-urgent' : 'badge-normal'}" style="font-size: 0.7rem; padding: 3px 8px; border-radius: 10px; background: #eee; float:right; color:#1F2937;">${t.priority}</span>
-                            <div class="task-subject"><i class="fa-solid fa-book"></i> ${t.subject}</div>
-                            <div class="task-date"><i class="fa-regular fa-clock"></i> ${t.date}</div>
-                            
-                            ${subtasksHtml}
-                        </div>
-                        
-                        <div class="card-actions">
-                            <a href="${calUrl}" target="_blank" class="calendar-btn" aria-label="Add to Google Calendar" tabindex="0">
-                                <i class="fa-solid fa-calendar-plus" style="font-size: 1rem;"></i> Add to Calendar
-                            </a>
-                            <button class="delete-btn-inline" onclick="deleteTask('${t.id}')" aria-label="Delete Task" tabindex="0">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
-
-                        <div class="task-overlay">
-                            <p class="overlay-desc">Done with this?</p>
-                            <button class="btn-finish" onclick="markAsDone('${t.id}')" aria-label="Mark task as done" tabindex="0">
-                                <i class="fa-solid fa-check"></i> Finish Task
-                            </button>
-                        </div>
+                // 1. Generate Checklist HTML
+                let subtasksHtml = '';
+                if (t.subtasks && t.subtasks.length > 0) {
+                    subtasksHtml = `
+                    <div style="margin-top: 15px; background: #F9FAFB; padding: 12px; border-radius: 8px; border: 1px solid #E5E7EB;">
+                        <p style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6B7280; font-weight: 700; margin-bottom: 8px;">Suggested Steps</p>
+                        ${t.subtasks.map(step => `
+                            <div style="display: flex; gap: 8px; align-items: start; margin-bottom: 6px; font-size: 0.85rem; color: #374151;">
+                                <i class="fa-regular fa-square-check" style="color: #9CA3AF; margin-top: 3px;"></i>
+                                <span style="line-height: 1.4;">${step}</span>
+                            </div>
+                        `).join('')}
                     </div>`;
-                    activeList.innerHTML += html;
-                });
-            }
+                }
+
+                // 2. Get Time Estimate (Default to 'TBD' if missing)
+                const timeEst = t.estimated_time || "TBD";
+
+                const html = `
+                <div class="task-card ${t.priority}" tabindex="0">
+                    <button class="edit-btn-corner" onclick="openEditModal('${t.id}')" aria-label="Edit Task" tabindex="0">
+                        <i class="fa-solid fa-pencil"></i>
+                    </button>
+
+                    <div class="task-content">
+                        <div class="task-title">${t.title}</div>
+                        
+                        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 10px;">
+                            <span class="task-badge" style="font-size: 0.75rem; color: #4B5563; background: #F3F4F6; padding: 4px 10px; border-radius: 12px; display: flex; align-items: center; gap: 5px;">
+                                <i class="fa-regular fa-hourglass"></i> ${timeEst}
+                            </span>
+                            <span class="task-badge ${t.priority === 'Urgent' ? 'badge-urgent' : 'badge-normal'}" style="font-size: 0.75rem; padding: 4px 10px; border-radius: 12px; background: #eee; color:#1F2937;">
+                                ${t.priority}
+                            </span>
+                        </div>
+
+                        <div class="task-subject"><i class="fa-solid fa-book"></i> ${t.subject}</div>
+                        <div class="task-date"><i class="fa-regular fa-clock"></i> ${t.date}</div>
+                        
+                        ${subtasksHtml}
+                    </div>
+                    
+                    <div class="card-actions">
+                        <a href="${calUrl}" target="_blank" class="calendar-btn" aria-label="Add to Google Calendar" tabindex="0">
+                            <i class="fa-solid fa-calendar-plus" style="font-size: 1rem;"></i> Add to Calendar
+                        </a>
+                        <button class="delete-btn-inline" onclick="deleteTask('${t.id}')" aria-label="Delete Task" tabindex="0">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+
+                    <div class="task-overlay">
+                        <p class="overlay-desc">Done with this?</p>
+                        <button class="btn-finish" onclick="markAsDone('${t.id}')" aria-label="Mark task as done" tabindex="0">
+                            <i class="fa-solid fa-check"></i> Finish Task
+                        </button>
+                    </div>
+                </div>`;
+                activeList.innerHTML += html;
+            });
+        }
+
+        if (completedTasks.length === 0) completedList.innerHTML = `<div style="color:#9CA3AF; padding: 20px;">No completed tasks yet.</div>`;
+        else {
+            completedList.innerHTML = '';
+            completedTasks.forEach(t => {
+                completedList.innerHTML += `
+                <div class="task-card completed-card" style="opacity: 0.6; background-color: #f9fafb; border-left: 5px solid #9CA3AF;" tabindex="0">
+                    <div class="task-content">
+                        <div class="task-title" style="text-decoration: line-through;">${t.title}</div>
+                        <div class="task-subject">${t.subject}</div>
+                        <div class="task-date">Completed</div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="delete-btn-inline" onclick="deleteTask('${t.id}')" aria-label="Delete Task" tabindex="0">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>`;
+            });
+        }
+    }
 
             if (completedTasks.length === 0) completedList.innerHTML = `<div style="color:#9CA3AF; padding: 20px;">No completed tasks yet.</div>`;
             else {
@@ -526,7 +558,7 @@
                     </div>`;
                 });
             }
-        }
+        
 
         function resetUpload() {
             document.querySelector('.upload-zone').style.display = 'block';
