@@ -8,8 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="config.js"></script>
     <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         /* --- CSS STYLES --- */
@@ -23,33 +23,22 @@
             --urgent: #EF4444;
         }
 
-        /* --- DARK MODE VARIABLES (Person C) --- */
-        body.dark-mode {
-            --light: #111827; /* Very dark background */
-            --white: #1F2937; /* Dark card background */
-            --dark: #F9FAFB;  /* Light text */
-            --secondary: #374151; /* Darker hover state */
-        }
-        /* Dark Mode Specific Overrides */
+        /* Dark Mode */
+        body.dark-mode { --light: #111827; --white: #1F2937; --dark: #F9FAFB; --secondary: #374151; }
         body.dark-mode .task-title { color: #F3F4F6; }
         body.dark-mode .task-subject { color: #9CA3AF; }
-        body.dark-mode input, body.dark-mode select {
-            background-color: #374151; color: white; border-color: #4B5563;
-        }
+        body.dark-mode input, body.dark-mode select { background-color: #374151; color: white; border-color: #4B5563; }
         body.dark-mode .modal-content { background-color: #1F2937; color: white; }
         body.dark-mode .sidebar { border-right-color: #374151; }
-        body.dark-mode .task-overlay { background-color: rgba(0, 0, 0, 0.9); }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { display: flex; height: 100vh; background-color: var(--light); color: var(--dark); transition: background-color 0.3s, color 0.3s; }
+        body { display: flex; height: 100vh; background-color: var(--light); color: var(--dark); transition: background-color 0.3s; }
 
         .sidebar { width: 250px; background-color: var(--white); border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; padding: 20px; transition: 0.3s; }
         .logo { font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 40px; display: flex; align-items: center; gap: 10px; }
 
-        /* Sidebar Accessibility focus styles */
         .nav-item { padding: 12px 15px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; color: #6B7280; font-weight: 500; transition: all 0.3s; display: flex; align-items: center; gap: 10px; }
         .nav-item:hover, .nav-item.active { background-color: var(--secondary); color: var(--primary); }
-        .nav-item:focus { outline: 2px solid var(--primary); background-color: var(--secondary); }
 
         .main-content { flex: 1; padding: 40px; overflow-y: auto; }
         .header { margin-bottom: 30px; }
@@ -71,46 +60,47 @@
 
         /* --- CARD STYLES --- */
         .task-card { 
-            background: var(--white); 
-            padding: 20px; 
-            border-radius: 16px; 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); 
-            border-left: 6px solid var(--primary); 
-            position: relative; 
-            overflow: hidden; 
-            transition: 0.3s; 
-            display: flex;
-            flex-direction: column;
-            min-height: 220px;
+            background: var(--white); padding: 20px; border-radius: 16px; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border-left: 6px solid var(--primary); 
+            position: relative; transition: 0.3s; display: flex; flex-direction: column; min-height: 220px; 
         }
         .task-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         .task-card.Urgent { border-left-color: #EF4444; } 
         .task-card.Medium { border-left-color: #F59E0B; } 
 
         .task-content { flex-grow: 1; display: flex; flex-direction: column; margin-bottom: 15px; }
-        .task-title { font-weight: 700; font-size: 1.15rem; margin-bottom: 8px; padding-right: 40px; line-height: 1.3; color: #111827; position: relative; z-index: 1;}
-        .task-subject { color: #6B7280; font-size: 0.9rem; margin-bottom: auto; position: relative; z-index: 1;}
-        .task-date { margin-top: 10px; font-size: 0.85rem; color: #4F46E5; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; background: #EEF2FF; padding: 6px 12px; border-radius: 20px; align-self: flex-start; position: relative; z-index: 1;}
+        .task-title { font-weight: 700; font-size: 1.15rem; margin-bottom: 8px; padding-right: 40px; line-height: 1.3; color: #111827; }
+        .task-subject { color: #6B7280; font-size: 0.9rem; margin-bottom: auto; }
+        .task-date { margin-top: 10px; font-size: 0.85rem; color: #4F46E5; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; background: #EEF2FF; padding: 6px 12px; border-radius: 20px; align-self: flex-start; }
 
-        /* --- BUTTON ROW --- */
+        /* Links Container */
+        .smart-links { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+
+        /* --- ACTION BUTTONS ROW --- */
         .card-actions { 
-            display: flex; gap: 12px; margin-top: auto; padding-top: 15px;
-            border-top: 1px solid #F3F4F6; position: relative; z-index: 20; 
+            display: flex; gap: 10px; margin-top: auto; padding-top: 15px;
+            border-top: 1px solid #F3F4F6; 
         }
         body.dark-mode .card-actions { border-top-color: #374151; }
         
+        /* 1. Calendar Button */
         .calendar-btn { 
-            display: flex; align-items: center; justify-content: center; flex: 1; 
-            padding: 10px 16px; background-color: #4F46E5; color: white !important; 
+            display: flex; align-items: center; justify-content: center; flex: 2; 
+            padding: 10px; background-color: #4F46E5; color: white !important; 
             border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 600;
             cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
         }
         .calendar-btn:hover { background-color: #4338ca; transform: translateY(-1px); }
-        /* Focus state for accessibility */
-        .calendar-btn:focus, .delete-btn-inline:focus, .edit-btn-corner:focus, .btn-finish:focus {
-            outline: 3px solid #F59E0B; outline-offset: 2px;
-        }
 
+        /* 2. Finish Button (Green) */
+        .check-btn-inline { 
+            display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; 
+            background-color: #D1FAE5; color: #10B981; border: 1px solid #A7F3D0; 
+            border-radius: 8px; cursor: pointer; transition: 0.2s; 
+        }
+        .check-btn-inline:hover { background-color: #10B981; color: white; }
+
+        /* 3. Delete Button (Red) */
         .delete-btn-inline { 
             display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; 
             background-color: #FEF2F2; color: #EF4444; border: 1px solid #FECACA; 
@@ -122,62 +112,31 @@
             position: absolute; top: 15px; right: 15px; width: 32px; height: 32px;
             border-radius: 50%; background: #fff; border: 1px solid #E5E7EB; color: #9CA3AF;
             display: flex; align-items: center; justify-content: center; 
-            cursor: pointer; z-index: 20; transition: all 0.2s;
+            cursor: pointer; transition: all 0.2s; z-index: 10;
         }
         .edit-btn-corner:hover { background: #F3F4F6; color: #4F46E5; border-color: #C7D2FE; }
 
-        .task-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(17, 24, 39, 0.92); color: white;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            opacity: 0; transition: opacity 0.3s ease; z-index: 5; backdrop-filter: blur(2px);
-        }
-        .task-card:hover .task-overlay { opacity: 1; }
-        /* Focus within for accessibility */
-        .task-card:focus-within .task-overlay { opacity: 1; }
-        
-        .btn-finish { 
-            background-color: #10B981; color: white; border: none; padding: 12px 24px; 
-            border-radius: 30px; cursor: pointer; font-weight: 600; display: flex; 
-            align-items: center; gap: 8px; transition: transform 0.2s; 
-            position: relative; z-index: 6; font-size: 1rem;
-        }
-        .btn-finish:hover { transform: scale(1.05); background-color: #059669; }
+        /* Completed Task Style */
+        .task-card.completed-card { opacity: 0.6; background-color: #f9fafb; border-left: 5px solid #9CA3AF !important; }
+        .task-card.completed-card .task-title { text-decoration: line-through; }
 
+        /* Modal & Loader */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
         .modal-content { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 400px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
-
         .loader-container { display: none; text-align: center; margin-top: 50px; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         .toast { position: fixed; bottom: 20px; right: 20px; background: #4F46E5; color: white; padding: 14px 20px; border-radius: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); opacity: 0; transform: translateY(20px); transition: all 0.3s ease; z-index: 2000; font-size: 0.9rem; }
         .toast.show { opacity: 1; transform: translateY(0); }
-        
         .hamburger { display: none; position: fixed; top: 20px; left: 20px; font-size: 1.8rem; cursor: pointer; z-index: 3000; background: white; padding: 8px 12px; border-radius: 8px; box-shadow: 0 5px 10px rgba(0,0,0,0.15); }
 
-        /* --- MOBILE OPTIMIZATIONS (Person C) --- */
         @media (max-width: 768px) { 
             body { flex-direction: column; } 
             .hamburger { display: block; } 
-            
-            .sidebar { 
-                position: fixed; left: -260px; top: 0; height: 100%; 
-                transition: left 0.3s ease; z-index: 2000; background: white; 
-                box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-            } 
+            .sidebar { position: fixed; left: -260px; top: 0; height: 100%; transition: left 0.3s ease; z-index: 2000; background: white; box-shadow: 2px 0 5px rgba(0,0,0,0.1); } 
             .sidebar.open { left: 0; } 
-            
-            /* Accessibility: Larger touch targets */
-            .btn-finish, .calendar-btn, .delete-btn-inline {
-                min-height: 48px; /* Touch target size */
-                font-size: 1rem;
-            }
-
-            /* Single column layout for mobile */
-            .schedule-grid {
-                grid-template-columns: 1fr;
-            }
+            .schedule-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -187,23 +146,18 @@
     <div class="sidebar">
         <div class="logo"><i class="fa-solid fa-graduation-cap"></i> SmartSched</div>
         
-        <div class="nav-item active" onclick="switchTab('dashboard')" role="button" tabindex="0" onkeypress="if(event.key==='Enter') switchTab('dashboard')">
+        <div class="nav-item active" onclick="switchTab('dashboard')" role="button" tabindex="0">
             <i class="fa-solid fa-chart-pie"></i> Dashboard
         </div>
-        <div class="nav-item" onclick="switchTab('upload')" role="button" tabindex="0" onkeypress="if(event.key==='Enter') switchTab('upload')">
+        <div class="nav-item" onclick="switchTab('upload')" role="button" tabindex="0">
             <i class="fa-solid fa-file-upload"></i> Upload Syllabus
         </div>
-        <div class="nav-item" onclick="switchTab('schedule')" role="button" tabindex="0" onkeypress="if(event.key==='Enter') switchTab('schedule')">
+        <div class="nav-item" onclick="switchTab('schedule')" role="button" tabindex="0">
             <i class="fa-solid fa-calendar-days"></i> My Schedule
         </div>
 
-        <div class="nav-item" onclick="toggleDarkMode()" role="button" tabindex="0" onkeypress="if(event.key==='Enter') toggleDarkMode()" style="margin-top: auto;">
-            <i class="fa-solid fa-moon"></i> Dark Mode
-        </div>
-
-        <div class="nav-item" id="logoutBtn" style="color: #EF4444;" role="button" tabindex="0">
-            <i class="fa-solid fa-sign-out-alt"></i> Log Out
-        </div>
+        <div class="nav-item" onclick="toggleDarkMode()" style="margin-top: auto;"><i class="fa-solid fa-moon"></i> Dark Mode</div>
+        <div class="nav-item" id="logoutBtn" style="color: #EF4444;"><i class="fa-solid fa-sign-out-alt"></i> Log Out</div>
     </div>
 
     <div class="main-content">
@@ -218,36 +172,40 @@
 
         <div id="upload" class="view-section">
             <div class="header"><h1>Upload Syllabus</h1><p>Upload your course PDF. Our AI will extract the deadlines.</p></div>
-            <div class="upload-zone" onclick="triggerFileInput()" role="button" tabindex="0" onkeypress="if(event.key==='Enter') triggerFileInput()">
+            
+            <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e5e7eb;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">1. Enter Gemini API Key</label>
+                <input type="password" id="userApiKey" placeholder="Paste key here" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px;">
+            </div>
+
+            <div class="upload-zone" onclick="triggerFileInput()" role="button" tabindex="0">
                 <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
                 <h3>Drag & Drop your Syllabus here</h3>
                 <p style="color: #9CA3AF; margin-top: 10px;">or click to browse files</p>
                 <input type="file" id="fileInput" accept="application/pdf" style="display: none;" onchange="handleFileSelect()">
             </div>
-            <div class="loader-container" id="aiLoader"><div class="spinner"></div><h3>Analyzing Syllabus with AI...</h3><p>Extracting dates, topics, and assignments.</p></div>
+            <div class="loader-container" id="aiLoader"><div class="spinner"></div><h3>Analyzing...</h3></div>
             <button class="btn-primary" id="processBtn" style="display: none;" onclick="processSyllabus()">Generate Study Plan</button>
         </div>
 
         <div id="schedule" class="view-section">
             <div class="header"><h1>Your Study Plan</h1><p>AI-generated schedule based on your uploads.</p></div>
-            <div class="schedule-grid" id="taskList"><div style="text-align: center; color: #9CA3AF; padding: 20px;">Loading tasks...</div></div>
+            <div class="schedule-grid" id="taskList"></div>
             <h2 style="margin-top:40px;">Completed Tasks</h2>
-            <div class="schedule-grid" id="completedTaskList"><div style="color:#9CA3AF;">No completed tasks yet.</div></div>
+            <div class="schedule-grid" id="completedTaskList"></div>
         </div>
     </div>
 
     <div id="editModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header" style="font-weight:bold; margin-bottom:15px; font-size:1.2rem;">Edit Task Details</div>
-            <div class="form-group"><label>Assignment Title</label><input type="text" id="editTitle"></div>
-            <div class="form-group"><label>Subject / Course</label><input type="text" id="editSubject"></div>
+            <div class="form-group"><label>Title</label><input type="text" id="editTitle"></div>
+            <div class="form-group"><label>Subject</label><input type="text" id="editSubject"></div>
             <div class="form-group"><label>Due Date</label><input type="date" id="editDate"></div>
-            <div class="form-group"><label>Priority</label>
-                <select id="editPriority"><option value="Normal">Normal</option><option value="Medium">Medium</option><option value="Urgent">Urgent</option></select>
-            </div>
+            <div class="form-group"><label>Priority</label><select id="editPriority"><option value="Normal">Normal</option><option value="Medium">Medium</option><option value="Urgent">Urgent</option></select></div>
             <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
-                <button class="btn-save" onclick="saveEditTask()">Save Changes</button>
+                <button class="btn-cancel" style="background:#E5E7EB; padding:10px; border-radius:6px; border:none; cursor:pointer; flex:1;" onclick="closeEditModal()">Cancel</button>
+                <button class="btn-save" style="background:#4F46E5; color:white; padding:10px; border-radius:6px; border:none; cursor:pointer; flex:1;" onclick="saveEditTask()">Save Changes</button>
             </div>
         </div>
     </div>
@@ -272,7 +230,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-        const GEMINI_API_KEY = CONFIG.GEMINI_API_KEY;
 
         let currentUser = null;
         let selectedFile = null;
@@ -284,40 +241,43 @@
             else { window.location.href = "index.html"; }
         });
 
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            if(confirm("Are you sure you want to log out?")) signOut(auth).then(() => window.location.href = "index.html");
-        });
+        document.getElementById('logoutBtn').onclick = () => {
+            Swal.fire({
+                title: 'Log out?', text: "You will be returned to the login screen.", icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#EF4444', confirmButtonText: 'Yes, log out'
+            }).then((result) => { if (result.isConfirmed) signOut(auth).then(() => window.location.href = "index.html"); });
+        };
 
-        // --- DARK MODE LOGIC (Person C) ---
-        window.toggleDarkMode = function() {
-            document.body.classList.toggle('dark-mode');
-        }
-
-        window.switchTab = function(tabId) {
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            document.querySelectorAll('.view-section').forEach(section => section.classList.remove('active'));
+        window.toggleDarkMode = () => document.body.classList.toggle('dark-mode');
+        window.switchTab = (tabId) => {
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
+            document.querySelector('.sidebar').classList.remove('open');
         }
-
-        window.triggerFileInput = function() { document.getElementById('fileInput').click(); }
-        window.handleFileSelect = function() {
-            const fileInput = document.getElementById('fileInput');
-            if(fileInput.files.length > 0) {
-                selectedFile = fileInput.files[0];
+        window.triggerFileInput = () => document.getElementById('fileInput').click();
+        window.handleFileSelect = () => {
+            const f = document.getElementById('fileInput');
+            if(f.files.length > 0) {
+                selectedFile = f.files[0];
                 document.querySelector('.upload-zone h3').innerText = "File Selected: " + selectedFile.name;
                 document.getElementById('processBtn').style.display = "inline-block";
             }
         }
 
         window.processSyllabus = async function() {
+            // Get Key from Input Box
+            const apiKey = document.getElementById('userApiKey').value.trim();
+            if (!apiKey) { showToast("Please enter API Key", "error"); return; }
             if (!selectedFile) return;
+
             document.querySelector('.upload-zone').style.display = 'none';
             document.getElementById('processBtn').style.display = 'none';
             document.getElementById('aiLoader').style.display = 'block';
 
             try {
                 const text = await extractTextFromPDF(selectedFile);
-                const tasks = await analyzeWithGemini(text);
+                const tasks = await analyzeWithGemini(text, apiKey);
                 await saveTasksToFirestore(tasks);
                 document.getElementById('aiLoader').style.display = 'none';
                 switchTab('schedule');
@@ -332,54 +292,29 @@
         }
 
         async function extractTextFromPDF(file) {
-            const arrayBuffer = await file.arrayBuffer();
-            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            const ab = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument(ab).promise;
             let fullText = "";
             for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const textContent = await page.getTextContent();
-                fullText += textContent.items.map(item => item.str).join(" ") + "\n";
+                const p = await pdf.getPage(i);
+                const t = await p.getTextContent();
+                fullText += t.items.map(s => s.str).join(" ") + "\n";
             }
             return fullText;
         }
 
-        async function analyzeWithGemini(syllabusText) {
-        // ✅ UPDATED PROMPT: Asks for 'subtasks' AND 'estimated_time'
-        const prompt = `
-            Analyze this syllabus text. Extract assignments, quizzes, and exams.
-            
-            1. For major tasks, generate a "subtasks" checklist.
-            2. Estimate the time required to complete the task based on its complexity (e.g., "2 hours", "45 mins", "10 hours").
-            
-            Return ONLY a valid JSON array. 
-            Schema: [{"title": "Task Name", "subject": "Course Name", "date": "YYYY-MM-DD", "priority": "Urgent/Medium/Normal", "subtasks": ["Step 1", "Step 2"], "estimated_time": "2 hours"}]
-            
-            Text: ${syllabusText.substring(0, 10000)}
-        `;
-        
-        // Using Gemini 2.5 Flash
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-        
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-        });
-
-        if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.error?.message || "Gemini API Error");
+        async function analyzeWithGemini(text, apiKey) {
+            const prompt = `Analyze this syllabus text. Extract assignments/exams. Return JSON: [{"title": "Task", "subject": "Course", "date": "YYYY-MM-DD", "priority": "Urgent/Medium/Normal", "subtasks": ["Step 1"], "estimated_time": "2 hours"}] Text: ${text.substring(0, 10000)}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+            const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
+            if (!res.ok) throw new Error("Gemini API Error - Check Key");
+            const data = await res.json();
+            return JSON.parse(data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim());
         }
-        
-        const data = await response.json();
-        const aiText = data.candidates[0].content.parts[0].text;
-        const jsonString = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
-        return JSON.parse(jsonString);
-    }
 
         async function saveTasksToFirestore(tasks) {
             if(!currentUser) return;
-            const promises = tasks.map(task => addDoc(collection(db, "tasks"), { ...task, completed: false, userId: currentUser.uid, createdAt: new Date() }));
+            const promises = tasks.map(t => addDoc(collection(db, "tasks"), { ...t, completed: false, userId: currentUser.uid, createdAt: new Date() }));
             await Promise.all(promises);
             await loadTasksFromFirestore(); 
         }
@@ -387,17 +322,22 @@
         async function loadTasksFromFirestore() {
             if(!currentUser) return;
             const q = query(collection(db, "tasks"), where("userId", "==", currentUser.uid));
-            const querySnapshot = await getDocs(q);
+            const snap = await getDocs(q);
             globalTasks = [];
-            querySnapshot.forEach((doc) => globalTasks.push({ id: doc.id, ...doc.data() }));
+            snap.forEach((doc) => globalTasks.push({ id: doc.id, ...doc.data() }));
             renderTasks(globalTasks);
         }
 
+        // --- GLOBAL FUNCTIONS ---
         window.deleteTask = async function(taskId) {
-            if(confirm("Delete task?")) {
+            const result = await Swal.fire({
+                title: 'Delete Task?', text: "You cannot undo this.", icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#EF4444', confirmButtonText: 'Delete'
+            });
+            if (result.isConfirmed) {
                 await deleteDoc(doc(db, "tasks", taskId));
                 loadTasksFromFirestore();
-                showToast("Task deleted");
+                Swal.fire('Deleted!', 'Task removed.', 'success');
             }
         }
 
@@ -407,8 +347,7 @@
             showToast("Task completed ✅");
         }
 
-        // --- EDIT LOGIC ---
-        window.openEditModal = function(taskId) {
+        window.openEditModal = (taskId) => {
             const task = globalTasks.find(t => t.id === taskId);
             if(!task) return;
             editingTaskId = taskId;
@@ -418,143 +357,103 @@
             document.getElementById('editPriority').value = task.priority;
             document.getElementById('editModal').style.display = 'flex';
         }
-
-        window.closeEditModal = function() {
-            document.getElementById('editModal').style.display = 'none';
-            editingTaskId = null;
-        }
-
-        window.saveEditTask = async function() {
+        window.closeEditModal = () => { document.getElementById('editModal').style.display = 'none'; editingTaskId = null; }
+        
+        window.saveEditTask = async () => {
             if(!editingTaskId) return;
-            const updatedData = {
+            const data = {
                 title: document.getElementById('editTitle').value,
                 subject: document.getElementById('editSubject').value,
                 date: document.getElementById('editDate').value,
                 priority: document.getElementById('editPriority').value
             };
-            await updateDoc(doc(db, "tasks", editingTaskId), updatedData);
+            await updateDoc(doc(db, "tasks", editingTaskId), data);
             closeEditModal();
             loadTasksFromFirestore();
             showToast("Task updated");
         }
 
         function renderTasks(tasks) {
-        const activeList = document.getElementById('taskList');
-        const completedList = document.getElementById('completedTaskList');
-        const activeTasks = tasks.filter(t => !t.completed);
-        const completedTasks = tasks.filter(t => t.completed);
+            const activeList = document.getElementById('taskList');
+            const completedList = document.getElementById('completedTaskList');
+            const active = tasks.filter(t => !t.completed);
+            const completed = tasks.filter(t => t.completed);
 
-        // Update Counters
-        document.getElementById('total-count').innerText = tasks.length;
-        document.getElementById('upcoming-count').innerText = activeTasks.length;
-        document.getElementById('urgent-count').innerText = tasks.filter(t => t.priority === 'Urgent' && !t.completed).length;
+            document.getElementById('total-count').innerText = tasks.length;
+            document.getElementById('upcoming-count').innerText = active.length;
+            document.getElementById('urgent-count').innerText = active.filter(t => t.priority === 'Urgent').length;
 
-        if (activeTasks.length === 0) {
-            activeList.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #9CA3AF; padding: 40px; background: white; border-radius: 12px; border: 1px dashed #E5E7EB;"><i class="fa-solid fa-clipboard-list" style="font-size: 2rem; margin-bottom: 10px;"></i><br>No active tasks.</div>`;
-        } else {
-            activeList.innerHTML = '';
-            activeTasks.forEach(t => {
-                const cleanDate = t.date ? t.date.replace(/-/g, '') : ''; 
-                const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.title)}&details=${encodeURIComponent(t.subject)}&dates=${cleanDate}/${cleanDate}`;
+            // Empty State Logic
+            if (active.length === 0) {
+                activeList.innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; color: #9CA3AF; padding: 60px; background: white; border-radius: 16px; border: 2px dashed #E5E7EB;">
+                    <i class="fa-solid fa-mug-hot" style="font-size: 3rem; margin-bottom: 20px; color: #E0E7FF;"></i>
+                    <h3 style="color: #374151; margin-bottom: 8px;">All caught up!</h3>
+                    <p style="font-size: 0.95rem;">Enjoy your free time.</p>
+                </div>`;
+            } else {
+                activeList.innerHTML = active.map(t => generateTaskHTML(t, false)).join('');
+            }
 
-                // --- 1. SMART LINKS LOGIC ---
-                // We combine Subject + Title + "Tutorial" for the best results
-                const searchQuery = encodeURIComponent(`${t.subject} ${t.title} tutorial`);
-                const googleUrl = `https://www.google.com/search?q=${searchQuery}`;
-                const ytUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
+            if (completed.length === 0) {
+                completedList.innerHTML = `<div style="color:#9CA3AF; padding: 20px;">No completed tasks yet.</div>`;
+            } else {
+                completedList.innerHTML = completed.map(t => generateTaskHTML(t, true)).join('');
+            }
+        }
 
-                // --- 2. Subtasks HTML ---
-                let subtasksHtml = '';
-                if (t.subtasks && t.subtasks.length > 0) {
-                    subtasksHtml = `
-                    <div style="margin-top: 15px; background: #F9FAFB; padding: 12px; border-radius: 8px; border: 1px solid #E5E7EB;">
-                        <p style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6B7280; font-weight: 700; margin-bottom: 8px;">Suggested Steps</p>
-                        ${t.subtasks.map(step => `
-                            <div style="display: flex; gap: 8px; align-items: start; margin-bottom: 6px; font-size: 0.85rem; color: #374151;">
-                                <i class="fa-regular fa-square-check" style="color: #9CA3AF; margin-top: 3px;"></i>
-                                <span style="line-height: 1.4;">${step}</span>
-                            </div>
-                        `).join('')}
-                    </div>`;
-                }
+        function generateTaskHTML(t, isDone) {
+            const cardClass = isDone ? `task-card completed-card` : `task-card ${t.priority}`;
+            const cleanDate = t.date ? t.date.replace(/-/g, '') : ''; 
+            const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.title)}&details=${encodeURIComponent(t.subject)}&dates=${cleanDate}/${cleanDate}`;
+            const searchQuery = encodeURIComponent(`${t.subject} ${t.title} tutorial`);
+            const googleUrl = `https://www.google.com/search?q=${searchQuery}`;
+            const ytUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
+            const timeEst = t.estimated_time || "TBD";
 
-                // --- 3. Time Estimate ---
-                const timeEst = t.estimated_time || "TBD";
+            let subtasksHtml = '';
+            if (t.subtasks && t.subtasks.length > 0) {
+                subtasksHtml = `
+                <div style="margin-top: 15px; background: #F9FAFB; padding: 12px; border-radius: 8px; border: 1px solid #E5E7EB;">
+                    <p style="font-size: 0.7rem; text-transform: uppercase; color: #6B7280; font-weight: 700; margin-bottom: 8px;">Steps</p>
+                    ${t.subtasks.map(step => `<div style="display: flex; gap: 8px; margin-bottom: 6px; font-size: 0.85rem; color: #374151;"><i class="fa-regular fa-square-check" style="color: #9CA3AF;"></i> ${step}</div>`).join('')}
+                </div>`;
+            }
 
-                const html = `
-                <div class="task-card ${t.priority}" tabindex="0">
-                    <button class="edit-btn-corner" onclick="openEditModal('${t.id}')" aria-label="Edit Task" tabindex="0">
-                        <i class="fa-solid fa-pencil"></i>
-                    </button>
+            // BUTTONS: Calendar | Finish | Delete
+            // Finish button is now standard Green Square button next to others
+            const actionButtons = isDone ? 
+                `<button class="delete-btn-inline" onclick="deleteTask('${t.id}')"><i class="fa-solid fa-trash"></i></button>` :
+                `<a href="${calUrl}" target="_blank" class="calendar-btn"><i class="fa-solid fa-calendar-plus" style="font-size: 1rem;"></i> Calendar</a>
+                 <button class="check-btn-inline" onclick="markAsDone('${t.id}')" title="Finish Task"><i class="fa-solid fa-check"></i></button>
+                 <button class="delete-btn-inline" onclick="deleteTask('${t.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>`;
 
-                    <div class="task-content">
-                        <div class="task-title">${t.title}</div>
-                        
-                        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 10px;">
-                            <span class="task-badge" style="font-size: 0.75rem; color: #4B5563; background: #F3F4F6; padding: 4px 10px; border-radius: 12px; display: flex; align-items: center; gap: 5px;">
-                                <i class="fa-regular fa-hourglass"></i> ${timeEst}
-                            </span>
-                            <span class="task-badge ${t.priority === 'Urgent' ? 'badge-urgent' : 'badge-normal'}" style="font-size: 0.75rem; padding: 4px 10px; border-radius: 12px; background: #eee; color:#1F2937;">
-                                ${t.priority}
-                            </span>
-                        </div>
-
-                        <div class="task-subject"><i class="fa-solid fa-book"></i> ${t.subject}</div>
-                        <div class="task-date"><i class="fa-regular fa-clock"></i> ${t.date}</div>
-
-                        <div style="display: flex; gap: 10px; margin-top: 12px;">
-                            <a href="${googleUrl}" target="_blank" style="text-decoration: none; flex: 1; background: #EFF6FF; color: #1D4ED8; padding: 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; text-align: center; border: 1px solid #DBEAFE; transition: 0.2s;">
-                                <i class="fa-brands fa-google"></i> Google It
-                            </a>
-                            <a href="${ytUrl}" target="_blank" style="text-decoration: none; flex: 1; background: #FEF2F2; color: #B91C1C; padding: 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; text-align: center; border: 1px solid #FECACA; transition: 0.2s;">
-                                <i class="fa-brands fa-youtube"></i> Watch Video
-                            </a>
-                        </div>
-                        
-                        ${subtasksHtml}
-                    </div>
+            return `
+            <div class="${cardClass}">
+                ${!isDone ? `<button class="edit-btn-corner" onclick="openEditModal('${t.id}')"><i class="fa-solid fa-pencil"></i></button>` : ''}
+                
+                <div class="task-content">
+                    <div class="task-title">${t.title}</div>
+                    ${!isDone ? `<div style="display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 10px;">
+                        <span class="task-badge" style="font-size: 0.75rem; color: #4B5563; background: #F3F4F6; padding: 4px 10px; border-radius: 12px;"><i class="fa-regular fa-hourglass"></i> ${timeEst}</span>
+                        <span class="task-badge ${t.priority === 'Urgent' ? 'badge-urgent' : 'badge-normal'}" style="font-size: 0.75rem; padding: 4px 10px; border-radius: 12px; background: #eee; color:#1F2937;">${t.priority}</span>
+                    </div>` : ''}
                     
-                    <div class="card-actions">
-                        <a href="${calUrl}" target="_blank" class="calendar-btn" aria-label="Add to Google Calendar" tabindex="0">
-                            <i class="fa-solid fa-calendar-plus" style="font-size: 1rem;"></i> Calendar
-                        </a>
-                        <button class="delete-btn-inline" onclick="deleteTask('${t.id}')" aria-label="Delete Task" tabindex="0">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
+                    <div class="task-subject"><i class="fa-solid fa-book"></i> ${t.subject}</div>
+                    <div class="task-date"><i class="fa-regular fa-clock"></i> ${isDone ? "Completed" : t.date}</div>
 
-                    <div class="task-overlay">
-                        <p class="overlay-desc">Done with this?</p>
-                        <button class="btn-finish" onclick="markAsDone('${t.id}')" aria-label="Mark task as done" tabindex="0">
-                            <i class="fa-solid fa-check"></i> Finish Task
-                        </button>
-                    </div>
-                </div>`;
-                activeList.innerHTML += html;
-            });
+                    ${!isDone ? `<div class="smart-links">
+                        <a href="${googleUrl}" target="_blank" style="text-decoration: none; flex: 1; background: #EFF6FF; color: #1D4ED8; padding: 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; text-align: center; border: 1px solid #DBEAFE; transition: 0.2s;"><i class="fa-brands fa-google"></i> Google It</a>
+                        <a href="${ytUrl}" target="_blank" style="text-decoration: none; flex: 1; background: #FEF2F2; color: #B91C1C; padding: 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; text-align: center; border: 1px solid #FECACA; transition: 0.2s;"><i class="fa-brands fa-youtube"></i> Watch Video</a>
+                    </div>` : ''}
+                    ${!isDone ? subtasksHtml : ''}
+                </div>
+                
+                <div class="card-actions">
+                    ${actionButtons}
+                </div>
+            </div>`;
         }
-
-        if (completedTasks.length === 0) completedList.innerHTML = `<div style="color:#9CA3AF; padding: 20px;">No completed tasks yet.</div>`;
-        else {
-            completedList.innerHTML = '';
-            completedTasks.forEach(t => {
-                completedList.innerHTML += `
-                <div class="task-card completed-card" style="opacity: 0.6; background-color: #f9fafb; border-left: 5px solid #9CA3AF;" tabindex="0">
-                    <div class="task-content">
-                        <div class="task-title" style="text-decoration: line-through;">${t.title}</div>
-                        <div class="task-subject">${t.subject}</div>
-                        <div class="task-date">Completed</div>
-                    </div>
-                    <div class="card-actions">
-                        <button class="delete-btn-inline" onclick="deleteTask('${t.id}')" aria-label="Delete Task" tabindex="0">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                </div>`;
-            });
-        }
-    }
-        
 
         function resetUpload() {
             document.querySelector('.upload-zone').style.display = 'block';
