@@ -3,195 +3,338 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Authentication | SmartSched</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>SmartSched | Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
-        /* --- CSS STYLES --- */
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background-color: #283593; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        
-        .login-container { 
-            background: white;
-            width: 100%; 
-            max-width: 400px; 
-            padding: 40px; 
-            border-radius: 12px;
-            text-align: center; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        :root {
+            --primary: #4F46E5;
+            --secondary: #818CF8;
+            --bg: #F3F4F6;
         }
-        
-        h1 { color: #1F2937; font-size: 2rem; font-weight: 700; margin-bottom: 30px; }
-        
-        /* Google Button */
-        .btn-google { background-color: white; color: #374151; width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-weight: 600; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; margin-bottom: 20px; transition: 0.2s; }
-        .btn-google:hover { background-color: #f9f9f9; }
 
-        /* Inputs */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+        }
+
+        /* --- GLASS CARD DESIGN --- */
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .logo {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        h2 { color: #1F2937; margin-bottom: 5px; }
+        p { color: #6B7280; font-size: 0.9rem; margin-bottom: 30px; }
+
+        /* --- INPUT FIELDS --- */
         .input-group { text-align: left; margin-bottom: 15px; }
-        label { display: block; color: #374151; margin-bottom: 5px; font-size: 0.9rem; font-weight: 600; }
-        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 1rem; outline: none; }
-        input:focus { border-color: #283593; }
+        .input-group label { display: block; font-size: 0.85rem; color: #4B5563; margin-bottom: 5px; font-weight: 600; }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #D1D5DB;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: 0.2s;
+            background: #F9FAFB;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
 
-        /* Main Action Button */
-        .btn-email { background-color: #283593; color: white; width: 100%; padding: 15px; border-radius: 8px; border: none; font-size: 1.1rem; font-weight: 600; cursor: pointer; margin-top: 10px; transition: background 0.3s; }
-        .btn-email:hover { background-color: #1A237E; }
-        
-        /* Toggle Link Styles */
-        .toggle-container { margin-top: 20px; color: #6B7280; font-size: 0.9rem; }
-        .toggle-link { color: #283593; font-weight: 600; cursor: pointer; text-decoration: none; }
-        .toggle-link:hover { text-decoration: underline; }
+        /* --- BUTTONS --- */
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 10px;
+        }
+        .btn-primary:hover { background-color: #4338ca; transform: translateY(-1px); }
+        .btn-primary:disabled { background-color: #9CA3AF; cursor: not-allowed; }
 
-        /* Error Message */
-        #error-msg { color: #dc2626; margin-top: 15px; display: none; font-size: 0.9rem; background: #fee2e2; padding: 10px; border-radius: 6px; }
+        .btn-google {
+            width: 100%;
+            padding: 12px;
+            background-color: white;
+            color: #374151;
+            border: 1px solid #D1D5DB;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-google:hover { background-color: #F9FAFB; border-color: #9CA3AF; }
+
+        .divider {
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            color: #9CA3AF;
+            font-size: 0.8rem;
+        }
+        .divider::before, .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #E5E7EB;
+        }
+        .divider span { padding: 0 10px; }
+
+        .toggle-text { margin-top: 20px; font-size: 0.9rem; color: #6B7280; }
+        .toggle-text a { color: var(--primary); text-decoration: none; font-weight: 600; cursor: pointer; }
+        .toggle-text a:hover { text-decoration: underline; }
+
+        /* Error Text */
+        .error-msg {
+            color: #EF4444;
+            font-size: 0.8rem;
+            margin-top: 4px;
+            display: none; /* Hidden by default */
+        }
+
+        /* Hidden Classes for Toggling */
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div class="login-container">
-    <h1 id="page-title">Log in</h1>
+    <div class="container" id="login-container">
+        <div class="logo"><i class="fa-solid fa-graduation-cap"></i></div>
+        <h2>Welcome Back</h2>
+        <p>Login to continue studying smarter.</p>
 
-    <button class="btn-google" id="google-btn">
-        <i class="fa-brands fa-google" style="color: #4285F4; font-size: 1.2rem;"></i>
-        Continue with Google
-    </button>
+        <div class="input-group">
+            <label>Email Address</label>
+            <input type="email" id="login-email" placeholder="student@example.com">
+        </div>
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="login-password" placeholder="••••••••">
+        </div>
 
-    <div style="display: flex; align-items: center; margin: 20px 0;">
-        <div style="flex: 1; height: 1px; background: #ddd;"></div>
-        <span style="padding: 0 10px; color: #9ca3af; font-size: 0.9rem;">OR</span>
-        <div style="flex: 1; height: 1px; background: #ddd;"></div>
+        <button class="btn-primary" onclick="handleLogin()" id="login-btn">Log In</button>
+        
+        <div class="divider"><span>OR</span></div>
+        
+        <button class="btn-google" onclick="handleGoogleLogin()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> 
+            Continue with Google
+        </button>
+
+        <div class="toggle-text">
+            New here? <a onclick="toggleForms()">Create an account</a>
+        </div>
     </div>
 
-    <div class="input-group">
-        <label>Email Address</label>
-        <input type="email" id="email" placeholder="student@example.com">
+    <div class="container hidden" id="signup-container">
+        <div class="logo"><i class="fa-solid fa-rocket"></i></div>
+        <h2>Create Account</h2>
+        <p>Join SmartSched today.</p>
+
+        <div class="input-group">
+            <label>Full Name</label>
+            <input type="text" id="signup-name" placeholder="John Doe">
+            <div id="error-name" class="error-msg">Names cannot contain numbers.</div>
+        </div>
+        <div class="input-group">
+            <label>Email Address</label>
+            <input type="email" id="signup-email" placeholder="student@example.com">
+            <div id="error-email" class="error-msg">Please enter a valid email address.</div>
+        </div>
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="signup-password" placeholder="Min. 6 characters">
+            <div id="error-pass" class="error-msg">Password must be at least 6 characters.</div>
+        </div>
+
+        <button class="btn-primary" onclick="handleSignup()" id="signup-btn">Sign Up</button>
+
+        <div class="toggle-text">
+            Already have an account? <a onclick="toggleForms()">Log In</a>
+        </div>
     </div>
 
-    <div class="input-group">
-        <label>Password</label>
-        <input type="password" id="password" placeholder="Min. 6 characters">
-    </div>
+    <script type="module">
+        // 1. IMPORT FIREBASE (Using your config)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    <button class="btn-email" id="action-btn">
-        Log in with Email
-    </button>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBol-uWE7KCF_ESsd7QvsIVZ9KiBWcyN4c",
+            authDomain: "smartsched-452d3.firebaseapp.com",
+            projectId: "smartsched-452d3",
+            storageBucket: "smartsched-452d3.firebasestorage.app",
+            messagingSenderId: "623006049130",
+            appId: "1:623006049130:web:a9610ea2c1e401098c7b13",
+            measurementId: "G-833N678XPR"
+        };
 
-    <div class="toggle-container">
-        <span id="toggle-text">Don't have an account?</span>
-        <span class="toggle-link" id="toggle-btn">Sign Up</span>
-    </div>
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
 
-    <p id="error-msg"></p>
-</div>
+        // --- 2. GLOBAL FUNCTIONS ---
+        
+        // SWITCH BETWEEN LOGIN & SIGNUP (Fixes "Sticky Fields")
+        window.toggleForms = function() {
+            const loginBox = document.getElementById('login-container');
+            const signupBox = document.getElementById('signup-container');
+            
+            // Clear inputs when switching (QA Fix)
+            document.querySelectorAll('input').forEach(input => input.value = '');
+            document.querySelectorAll('.error-msg').forEach(msg => msg.style.display = 'none');
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    // KEY CHANGE: Ensure signInWithPopup is imported and used, NOT signInWithRedirect
-    import {
-        getAuth,
-        GoogleAuthProvider,
-        signInWithPopup,
-        signInWithEmailAndPassword,
-        createUserWithEmailAndPassword
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-    // CONFIGURATION
-    const firebaseConfig = {
-        apiKey: "AIzaSyBol-uWE7KCF_ESsd7QvsIVZ9KiBWcyN4c",
-        authDomain: "smartsched-452d3.firebaseapp.com",
-        projectId: "smartsched-452d3",
-        storageBucket: "smartsched-452d3.firebasestorage.app",
-        messagingSenderId: "623006049130",
-        appId: "1:623006049130:web:a9610ea2c1e401098c7b13",
-        measurementId: "G-833N678XPR"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
-
-    // VARIABLES
-    let isLoginMode = true;
-
-    const title = document.getElementById('page-title');
-    const actionBtn = document.getElementById('action-btn');
-    const toggleText = document.getElementById('toggle-text');
-    const toggleLink = document.getElementById('toggle-btn');
-    const errorMsg = document.getElementById('error-msg');
-
-    // TOGGLE SWITCH LOGIC
-    toggleLink.addEventListener('click', () => {
-        isLoginMode = !isLoginMode;
-        errorMsg.style.display = 'none';
-
-        if (isLoginMode) {
-            title.textContent = "Log in";
-            actionBtn.textContent = "Log in with Email";
-            toggleText.textContent = "Don't have an account?";
-            toggleLink.textContent = "Sign Up";
-        } else {
-            title.textContent = "Create Account";
-            actionBtn.textContent = "Sign Up with Email";
-            toggleText.textContent = "Already have an account?";
-            toggleLink.textContent = "Log in";
-        }
-    });
-
-    // HANDLE EMAIL AUTH
-    actionBtn.addEventListener('click', () => {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-
-        if(!email || !password) {
-            showError("Please enter email and password.");
-            return;
+            if (loginBox.classList.contains('hidden')) {
+                loginBox.classList.remove('hidden');
+                signupBox.classList.add('hidden');
+            } else {
+                loginBox.classList.add('hidden');
+                signupBox.classList.remove('hidden');
+            }
         }
 
-        if (isLoginMode) {
-            // LOG IN
-            signInWithEmailAndPassword(auth, email, password)
-                .then((cred) => {
-                    window.location.href = 'dashboard.html';
-                })
-                .catch((err) => handleAuthError(err));
-        } else {
-            // SIGN UP
-            createUserWithEmailAndPassword(auth, email, password)
-                .then((cred) => {
-                    alert("Account created! Logging you in...");
-                    window.location.href = 'dashboard.html';
-                })
-                .catch((err) => handleAuthError(err));
+        // --- 3. LOGIN LOGIC ---
+        window.handleLogin = async function() {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-password').value;
+            const btn = document.getElementById('login-btn');
+
+            if (!email || !pass) {
+                Swal.fire({ icon: 'error', title: 'Oops...', text: 'Please fill in all fields' });
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = "Logging in...";
+
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                window.location.href = "dashboard.html";
+            } catch (error) {
+                console.error(error);
+                let msg = "Invalid email or password.";
+                if (error.code === 'auth/user-not-found') msg = "No account found with this email.";
+                if (error.code === 'auth/wrong-password') msg = "Incorrect password.";
+                
+                Swal.fire({ icon: 'error', title: 'Login Failed', text: msg });
+                btn.disabled = false;
+                btn.innerText = "Log In";
+            }
         }
-    });
 
-    // HANDLE GOOGLE AUTH (THE FIX)
-    document.getElementById('google-btn').addEventListener('click', () => {
-        // Using signInWithPopup instead of signInWithRedirect
-        // This prevents the "missing initial state" error on mobile
-        signInWithPopup(auth, provider)
-            .then((result) => {
-                console.log("Google Login Success");
-                window.location.href = 'dashboard.html';
-            }).catch((error) => {
-                console.error("Google Login Error", error);
-                handleAuthError(error);
-            });
-    });
+        // --- 4. SIGNUP LOGIC (With Validation) ---
+        window.handleSignup = async function() {
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const pass = document.getElementById('signup-password').value;
+            const btn = document.getElementById('signup-btn');
 
-    function handleAuthError(error) {
-        let msg = error.message;
-        if(error.code === 'auth/email-already-in-use') msg = "That email is already registered.";
-        if(error.code === 'auth/weak-password') msg = "Password should be at least 6 characters.";
-        if(error.code === 'auth/invalid-credential') msg = "Invalid email or password.";
-        if(error.code === 'auth/popup-closed-by-user') msg = "Sign-in cancelled.";
-        showError(msg);
-    }
+            // VALIDATION (QA Fixes)
+            let isValid = true;
 
-    function showError(msg) {
-        errorMsg.textContent = msg;
-        errorMsg.style.display = 'block';
-    }
-</script>
+            // Name: No numbers allowed
+            if (/\d/.test(name) || name.length < 2) {
+                document.getElementById('error-name').style.display = 'block';
+                isValid = false;
+            } else { document.getElementById('error-name').style.display = 'none'; }
+
+            // Email: Must have @ and .
+            if (!email.includes('@') || !email.includes('.')) {
+                document.getElementById('error-email').style.display = 'block';
+                isValid = false;
+            } else { document.getElementById('error-email').style.display = 'none'; }
+
+            // Password: Min 6 chars
+            if (pass.length < 6) {
+                document.getElementById('error-pass').style.display = 'block';
+                isValid = false;
+            } else { document.getElementById('error-pass').style.display = 'none'; }
+
+            if (!isValid) return; // Stop if validation failed
+
+            btn.disabled = true;
+            btn.innerText = "Creating Account...";
+
+            try {
+                // Create user in Firebase Auth
+                const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+                const user = userCredential.user;
+
+                // Update Profile with Name
+                await updateProfile(user, { displayName: name });
+
+                // (Optional) Save extra data to Firestore
+                await setDoc(doc(db, "users", user.uid), {
+                    name: name,
+                    email: email,
+                    createdAt: new Date()
+                });
+
+                Swal.fire({ icon: 'success', title: 'Welcome!', text: 'Account created successfully.' })
+                .then(() => {
+                    window.location.href = "dashboard.html";
+                });
+
+            } catch (error) {
+                console.error(error);
+                let msg = error.message;
+                if (error.code === 'auth/email-already-in-use') msg = "This email is already registered.";
+                
+                Swal.fire({ icon: 'error', title: 'Signup Failed', text: msg });
+                btn.disabled = false;
+                btn.innerText = "Sign Up";
+            }
+        }
+
+        // --- 5. GOOGLE AUTH ---
+        window.handleGoogleLogin = async function() {
+            try {
+                await signInWithPopup(auth, provider);
+                window.location.href = "dashboard.html";
+            } catch (error) {
+                console.error(error);
+                Swal.fire({ icon: 'error', title: 'Error', text: error.message });
+            }
+        }
+    </script>
 </body>
 </html>
