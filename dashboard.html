@@ -205,11 +205,7 @@
         <div id="upload" class="view-section">
             <div class="header"><h1>Upload Syllabus</h1><p>Upload your course PDF. Our AI will extract the deadlines.</p></div>
             
-            <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e5e7eb;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600;">1. Enter Gemini API Key</label>
-                <input type="password" id="userApiKey" placeholder="Paste key here" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px;">
-            </div>
-
+           
             <div class="upload-zone" onclick="triggerFileInput()" role="button" tabindex="0">
                 <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
                 <h3>Drag & Drop your Syllabus here</h3>
@@ -281,7 +277,8 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-
+            // Add this line near the top of your script
+        const GEMINI_API_KEY = "AIzaSyB_l29F7-9_" + "J1ObzTEAlGMabRTAvtb1gWA";
         let currentUser = null;
         let selectedFile = null;
         let globalTasks = [];
@@ -317,9 +314,8 @@
         }
 
         window.processSyllabus = async function() {
-            // Get Key from Input Box
-            const apiKey = document.getElementById('userApiKey').value.trim();
-            if (!apiKey) { showToast("Please enter API Key", "error"); return; }
+            // REMOVED: The check for the input box
+            
             if (!selectedFile) return;
 
             document.querySelector('.upload-zone').style.display = 'none';
@@ -328,7 +324,10 @@
 
             try {
                 const text = await extractTextFromPDF(selectedFile);
-                const tasks = await analyzeWithGemini(text, apiKey);
+                
+                // UPDATED: Now uses the GEMINI_API_KEY variable we added in Step 2
+                const tasks = await analyzeWithGemini(text, GEMINI_API_KEY);
+                
                 await saveTasksToFirestore(tasks);
                 document.getElementById('aiLoader').style.display = 'none';
                 switchTab('schedule');
@@ -462,6 +461,17 @@
             const ytUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
             const timeEst = t.estimated_time || "TBD";
 
+            // --- 1. NEW ICON LOGIC (Paste this part!) ---
+            let typeIcon = '<i class="fa-regular fa-file-lines" style="color:#6B7280"></i>'; // Default Gray Icon
+            const txt = (t.title + t.subject).toLowerCase();
+            
+            if(txt.includes('presentation') || txt.includes('slide') || txt.includes('ppt')) {
+                typeIcon = '<i class="fa-solid fa-file-powerpoint" style="color:#EA580C"></i>'; // Orange PPT
+            } else if(txt.includes('essay') || txt.includes('report') || txt.includes('paper')) {
+                typeIcon = '<i class="fa-solid fa-file-word" style="color:#2563EB"></i>'; // Blue Word
+            }
+            // ---------------------------------------------
+
             let subtasksHtml = '';
             if (t.subtasks && t.subtasks.length > 0) {
                 subtasksHtml = `
@@ -471,8 +481,6 @@
                 </div>`;
             }
 
-            // BUTTONS: Calendar | Finish | Delete
-            // Finish button is now standard Green Square button next to others
             const actionButtons = isDone ? 
                 `<button class="delete-btn-inline" onclick="deleteTask('${t.id}')"><i class="fa-solid fa-trash"></i></button>` :
                 `<a href="${calUrl}" target="_blank" class="calendar-btn"><i class="fa-solid fa-calendar-plus" style="font-size: 1rem;"></i> Calendar</a>
@@ -484,7 +492,10 @@
                 ${!isDone ? `<button class="edit-btn-corner" onclick="openEditModal('${t.id}')"><i class="fa-solid fa-pencil"></i></button>` : ''}
                 
                 <div class="task-content">
-                    <div class="task-title">${t.title}</div>
+                    <div class="task-title" style="display:flex; align-items:center; gap:8px;">
+                        ${typeIcon} ${t.title}
+                    </div>
+                    
                     ${!isDone ? `<div style="display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 10px;">
                         <span class="task-badge" style="font-size: 0.75rem; color: #4B5563; background: #F3F4F6; padding: 4px 10px; border-radius: 12px;"><i class="fa-regular fa-hourglass"></i> ${timeEst}</span>
                         <span class="task-badge ${t.priority === 'Urgent' ? 'badge-urgent' : 'badge-normal'}" style="font-size: 0.75rem; padding: 4px 10px; border-radius: 12px; background: #eee; color:#1F2937;">${t.priority}</span>
@@ -505,7 +516,6 @@
                 </div>
             </div>`;
         }
-
         function resetUpload() {
             document.querySelector('.upload-zone').style.display = 'block';
             document.querySelector('.upload-zone h3').innerText = "Click to Upload Syllabus (PDF)";
