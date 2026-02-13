@@ -187,6 +187,9 @@
         <div class="nav-item" onclick="switchTab('schedule')" role="button" tabindex="0">
             <i class="fa-solid fa-calendar-days"></i> My Schedule
         </div>
+        <div class="nav-item" onclick="openQuiz()" style="color: #4F46E5; background: #EEF2FF; font-weight: 700;">
+            <i class="fa-solid fa-gamepad"></i> Study Mode
+        </div>
 
         <div class="nav-item" onclick="toggleDarkMode()" style="margin-top: auto;"><i class="fa-solid fa-moon"></i> Dark Mode</div>
         <div class="nav-item" id="logoutBtn" style="color: #EF4444;"><i class="fa-solid fa-sign-out-alt"></i> Log Out</div>
@@ -205,7 +208,6 @@
         <div id="upload" class="view-section">
             <div class="header"><h1>Upload Syllabus</h1><p>Upload your course PDF. Our AI will extract the deadlines.</p></div>
             
-           
             <div class="upload-zone" onclick="triggerFileInput()" role="button" tabindex="0">
                 <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
                 <h3>Drag & Drop your Syllabus here</h3>
@@ -277,8 +279,10 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-            // Add this line near the top of your script
-        const GEMINI_API_KEY = "AIzaSyB_l29F7-9_" + "J1ObzTEAlGMabRTAvtb1gWA";
+        
+        // --- ADDED: Global API Key Variable ---
+        const GEMINI_API_KEY = "AIzaSyB_l29F7-9_" + "J1ObzTEAlGMabRTAvtb1gWA"; 
+
         let currentUser = null;
         let selectedFile = null;
         let globalTasks = [];
@@ -313,9 +317,8 @@
             }
         }
 
+        // --- UPDATED: processSyllabus (Uses Global Key) ---
         window.processSyllabus = async function() {
-            // REMOVED: The check for the input box
-            
             if (!selectedFile) return;
 
             document.querySelector('.upload-zone').style.display = 'none';
@@ -324,10 +327,7 @@
 
             try {
                 const text = await extractTextFromPDF(selectedFile);
-                
-                // UPDATED: Now uses the GEMINI_API_KEY variable we added in Step 2
                 const tasks = await analyzeWithGemini(text, GEMINI_API_KEY);
-                
                 await saveTasksToFirestore(tasks);
                 document.getElementById('aiLoader').style.display = 'none';
                 switchTab('schedule');
@@ -353,26 +353,20 @@
             return fullText;
         }
 
+        // --- UPDATED: analyzeWithGemini (Accepts API Key) ---
         async function analyzeWithGemini(text, apiKey) {
-            // UPDATED: Using the apiKey passed to the function
             const prompt = `Analyze this syllabus text. Extract assignments/exams. Return JSON: [{"title": "Task", "subject": "Course", "date": "YYYY-MM-DD", "priority": "Urgent/Medium/Normal", "subtasks": ["Step 1"], "estimated_time": "2 hours"}] Text: ${text.substring(0, 10000)}`;
-            
-            // Make sure the key is actually being used here
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-            
             const res = await fetch(url, { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) 
             });
-            
             if (!res.ok) {
-                // Log the actual error from Google for debugging
                 const errData = await res.json();
                 console.error("Gemini API Error Details:", errData);
                 throw new Error("Gemini API Error - Check Key");
             }
-            
             const data = await res.json();
             return JSON.parse(data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim());
         }
@@ -393,7 +387,6 @@
             renderTasks(globalTasks);
         }
 
-        // --- GLOBAL FUNCTIONS ---
         window.deleteTask = async function(taskId) {
             const result = await Swal.fire({
                 title: 'Delete Task?', text: "You cannot undo this.", icon: 'warning',
@@ -448,7 +441,6 @@
             document.getElementById('upcoming-count').innerText = active.length;
             document.getElementById('urgent-count').innerText = active.filter(t => t.priority === 'Urgent').length;
 
-            // Empty State Logic
             if (active.length === 0) {
                 activeList.innerHTML = `
                 <div style="grid-column: 1/-1; text-align: center; color: #9CA3AF; padding: 60px; background: white; border-radius: 16px; border: 2px dashed #E5E7EB;">
@@ -476,7 +468,7 @@
             const ytUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
             const timeEst = t.estimated_time || "TBD";
 
-            // --- 1. NEW ICON LOGIC (Paste this part!) ---
+            // --- 1. NEW ICON LOGIC ---
             let typeIcon = '<i class="fa-regular fa-file-lines" style="color:#6B7280"></i>'; // Default Gray Icon
             const txt = (t.title + t.subject).toLowerCase();
             
@@ -510,7 +502,6 @@
                     <div class="task-title" style="display:flex; align-items:center; gap:8px;">
                         ${typeIcon} ${t.title}
                     </div>
-                    
                     ${!isDone ? `<div style="display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 10px;">
                         <span class="task-badge" style="font-size: 0.75rem; color: #4B5563; background: #F3F4F6; padding: 4px 10px; border-radius: 12px;"><i class="fa-regular fa-hourglass"></i> ${timeEst}</span>
                         <span class="task-badge ${t.priority === 'Urgent' ? 'badge-urgent' : 'badge-normal'}" style="font-size: 0.75rem; padding: 4px 10px; border-radius: 12px; background: #eee; color:#1F2937;">${t.priority}</span>
@@ -531,6 +522,7 @@
                 </div>
             </div>`;
         }
+
         function resetUpload() {
             document.querySelector('.upload-zone').style.display = 'block';
             document.querySelector('.upload-zone h3').innerText = "Click to Upload Syllabus (PDF)";
