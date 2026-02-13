@@ -354,10 +354,25 @@
         }
 
         async function analyzeWithGemini(text, apiKey) {
+            // UPDATED: Using the apiKey passed to the function
             const prompt = `Analyze this syllabus text. Extract assignments/exams. Return JSON: [{"title": "Task", "subject": "Course", "date": "YYYY-MM-DD", "priority": "Urgent/Medium/Normal", "subtasks": ["Step 1"], "estimated_time": "2 hours"}] Text: ${text.substring(0, 10000)}`;
+            
+            // Make sure the key is actually being used here
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-            const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
-            if (!res.ok) throw new Error("Gemini API Error - Check Key");
+            
+            const res = await fetch(url, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) 
+            });
+            
+            if (!res.ok) {
+                // Log the actual error from Google for debugging
+                const errData = await res.json();
+                console.error("Gemini API Error Details:", errData);
+                throw new Error("Gemini API Error - Check Key");
+            }
+            
             const data = await res.json();
             return JSON.parse(data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim());
         }
