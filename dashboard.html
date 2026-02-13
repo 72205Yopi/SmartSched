@@ -352,7 +352,7 @@
             }
             return fullText;
         }
-
+//ayaw di ko magawa ng maayos
         // --- UPDATED: analyzeWithGemini (Accepts API Key) ---
         async function analyzeWithGemini(text, apiKey) {
             const prompt = `Analyze this syllabus text. Extract assignments/exams. Return JSON: [{"title": "Task", "subject": "Course", "date": "YYYY-MM-DD", "priority": "Urgent/Medium/Normal", "subtasks": ["Step 1"], "estimated_time": "2 hours"}] Text: ${text.substring(0, 10000)}`;
