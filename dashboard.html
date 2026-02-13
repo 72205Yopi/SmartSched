@@ -138,6 +138,35 @@
             .sidebar.open { left: 0; } 
             .schedule-grid { grid-template-columns: 1fr; }
         }
+        /* --- KAHOOT STYLE QUIZ MODAL --- */
+        .quiz-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(17, 24, 39, 0.95); z-index: 3000; justify-content: center; align-items: center;
+        }
+        .quiz-content {
+            background: #46178F; /* Kahoot Purple */
+            width: 90%; max-width: 600px; border-radius: 20px; padding: 30px;
+            color: white; text-align: center; box-shadow: 0 20px 25px rgba(0,0,0,0.5);
+            border: 4px solid rgba(255,255,255,0.1);
+        }
+        .quiz-header { font-size: 1.8rem; font-weight: 900; margin-bottom: 20px; text-shadow: 2px 2px 0px rgba(0,0,0,0.2); }
+        .quiz-question { background: white; color: #333; padding: 20px; border-radius: 12px; font-weight: 700; font-size: 1.2rem; margin-bottom: 30px; }
+        .quiz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .quiz-btn {
+            padding: 20px; border: none; border-radius: 8px; color: white; font-weight: 700; font-size: 1.1rem; cursor: pointer; transition: transform 0.1s;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+        }
+        .quiz-btn:active { transform: translateY(4px); box-shadow: none; }
+        .q-red { background: #E21B3C; } 
+        .q-blue { background: #1368CE; }
+        .q-yellow { background: #D89E00; } 
+        .q-green { background: #26890C; }
+        .close-quiz { margin-top: 20px; background: transparent; border: 2px solid rgba(255,255,255,0.3); color: white; padding: 10px 20px; border-radius: 20px; cursor: pointer; }
+
+        /* --- ICONS ROW (Word/PPT/PDF) --- */
+        .supported-icons { display: flex; gap: 15px; justify-content: center; margin-top: 20px; opacity: 0.7; }
+        .icon-box { display: flex; flex-direction: column; align-items: center; font-size: 0.8rem; color: #6B7280; }
+        .icon-box i { font-size: 1.5rem; margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -189,6 +218,11 @@
             </div>
             <div class="loader-container" id="aiLoader"><div class="spinner"></div><h3>Analyzing...</h3></div>
             <button class="btn-primary" id="processBtn" style="display: none;" onclick="processSyllabus()">Generate Study Plan</button>
+            <div class="supported-icons">
+                <div class="icon-box"><i class="fa-solid fa-file-pdf" style="color: #EF4444;"></i> PDF</div>
+                <div class="icon-box"><i class="fa-solid fa-file-word" style="color: #2563EB;"></i> Word</div>
+                <div class="icon-box"><i class="fa-solid fa-file-powerpoint" style="color: #EA580C;"></i> PPT</div>
+            </div>
         </div>
 
         <div id="schedule" class="view-section">
@@ -196,6 +230,20 @@
             <div class="schedule-grid" id="taskList"></div>
             <h2 style="margin-top:40px;">Completed Tasks</h2>
             <div class="schedule-grid" id="completedTaskList"></div>
+        </div>
+    </div>
+
+    <div id="quizModal" class="quiz-modal">
+        <div class="quiz-content">
+            <div class="quiz-header">Study Mode 🚀</div>
+            <div class="quiz-question">What is the main topic of your upcoming History Exam?</div>
+            <div class="quiz-grid">
+                <button class="quiz-btn q-red">The Civil War</button>
+                <button class="quiz-btn q-blue">World War II</button>
+                <button class="quiz-btn q-yellow">The Renaissance</button>
+                <button class="quiz-btn q-green">Industrial Revolution</button>
+            </div>
+            <button class="close-quiz" onclick="closeQuiz()">Exit Game</button>
         </div>
     </div>
 
@@ -471,6 +519,8 @@
             setTimeout(() => toast.classList.remove("show"), 3000);
         }
         window.toggleSidebar = function () { document.querySelector('.sidebar').classList.toggle('open'); }
+        window.openQuiz = () => document.getElementById('quizModal').style.display = 'flex';
+        window.closeQuiz = () => document.getElementById('quizModal').style.display = 'none';
     </script>
 </body>
 </html>
