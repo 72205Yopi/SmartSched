@@ -717,6 +717,11 @@
             currentQuestionIndex++;
             setTimeout(renderQuizQuestion, 1500); 
         };
+        // --- CLOSE THE MENU ---
+        window.closeQuiz = () => {
+            document.getElementById('quizModal').style.display = 'none';
+            resetQuizMenu(); // This makes sure the menu resets for the next time you open it!
+        };
     </script>
 </body>
 </html>
