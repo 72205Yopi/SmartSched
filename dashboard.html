@@ -224,13 +224,21 @@
     <div id="quizModal" class="quiz-modal">
         <div class="quiz-content">
             <div class="quiz-header">Study Mode 🚀</div>
-            <div class="quiz-question">What is the main topic of your upcoming History Exam?</div>
-            <div class="quiz-grid">
-                <button class="quiz-btn q-red">The Civil War</button>
-                <button class="quiz-btn q-blue">World War II</button>
-                <button class="quiz-btn q-yellow">The Renaissance</button>
-                <button class="quiz-btn q-green">Industrial Revolution</button>
+            
+            <div id="quiz-question" class="quiz-question">Choose how you want to study:</div>
+            
+            <div id="quiz-options" class="quiz-grid">
+                <button class="quiz-btn q-blue" onclick="startQuickQuiz()">Quick Quiz (From Tasks)</button>
+                <button class="quiz-btn q-green" onclick="document.getElementById('materialInput').click()">Upload Materials</button>
             </div>
+
+            <input type="file" id="materialInput" accept=".pdf, .docx, .pptx" style="display: none;" onchange="handleMaterialUpload()">
+            
+            <div class="loader-container" id="quizLoader" style="margin-top: 20px;">
+                <div class="spinner" style="border-top-color: white;"></div>
+                <h3 style="color: white;">Reading materials & building quiz...</h3>
+            </div>
+
             <button class="close-quiz" onclick="closeQuiz()">Exit Game</button>
         </div>
     </div>
@@ -567,8 +575,148 @@
             setTimeout(() => toast.classList.remove("show"), 3000);
         }
         window.toggleSidebar = function () { document.querySelector('.sidebar').classList.toggle('open'); }
-        window.openQuiz = () => document.getElementById('quizModal').style.display = 'flex';
-        window.closeQuiz = () => document.getElementById('quizModal').style.display = 'none';
+        // --- STUDY MODE VARIABLES ---
+        let quizData = [];
+        let currentQuestionIndex = 0;
+        let quizScore = 0;
+
+        // --- OPEN MENU ---
+        window.openQuiz = () => {
+            document.getElementById('quizModal').style.display = 'flex';
+            resetQuizMenu();
+        };
+
+        window.resetQuizMenu = () => {
+            document.getElementById('quizLoader').style.display = 'none';
+            document.getElementById('quiz-options').style.display = 'grid';
+            document.getElementById('quiz-question').innerText = "Choose how you want to study:";
+            document.getElementById('quiz-options').innerHTML = `
+                <button class="quiz-btn q-blue" onclick="startQuickQuiz()"><i class="fa-solid fa-bolt"></i> Quick Quiz (Tasks)</button>
+                <button class="quiz-btn q-green" onclick="document.getElementById('materialInput').click()"><i class="fa-solid fa-upload"></i> Upload Materials</button>
+            `;
+        };
+
+        // --- OPTION 1: QUICK QUIZ ---
+        window.startQuickQuiz = async () => {
+            if (globalTasks.length === 0) {
+                document.getElementById('quiz-question').innerText = "You need to add tasks first!";
+                document.getElementById('quiz-options').innerHTML = `<button class="quiz-btn q-red" onclick="resetQuizMenu()">Go Back</button>`;
+                return;
+            }
+            
+            document.getElementById('quiz-options').style.display = 'none';
+            document.getElementById('quizLoader').style.display = 'block';
+            document.getElementById('quiz-question').innerText = "AI is building your quiz... 🧠";
+
+            try {
+                const topics = globalTasks.map(t => `${t.subject}: ${t.title}`).join(", ");
+                const prompt = `Create a 3-question multiple-choice quiz testing general knowledge on these academic topics: ${topics}. Return ONLY valid JSON in this exact format: [{"question": "...", "options": ["A", "B", "C", "D"], "answer": "The correct option exactly as written"}]`;
+                await generateAndStartQuiz(prompt);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('quiz-question').innerText = "Failed to generate quiz. Check console!";
+                resetQuizMenu();
+            }
+        };
+
+        // --- OPTION 2: UPLOAD MATERIALS ---
+        window.handleMaterialUpload = async () => {
+            const fileInput = document.getElementById('materialInput');
+            if (fileInput.files.length === 0) return;
+            
+            const file = fileInput.files[0];
+            document.getElementById('quiz-options').style.display = 'none';
+            document.getElementById('quizLoader').style.display = 'block';
+            document.getElementById('quiz-question').innerText = `Reading ${file.name}... 📖`;
+
+            try {
+                let text = "";
+                const fileName = file.name.toLowerCase();
+                
+                // Reuse your awesome file extractors!
+                if (fileName.endsWith('.pdf')) {
+                    text = await extractTextFromPDF(file);
+                } else if (fileName.endsWith('.docx')) {
+                    text = await extractTextFromWord(file);
+                } else if (fileName.endsWith('.pptx')) {
+                    text = await extractTextFromPPTX(file);
+                } else {
+                    throw new Error("Unsupported file type!");
+                }
+
+                document.getElementById('quiz-question').innerText = "AI is writing questions based on your material... 🧠";
+                
+                // Strict prompt so it ONLY uses the uploaded file
+                const prompt = `Based strictly on the following study material, create a 5-question multiple-choice quiz. Return ONLY valid JSON in this exact format: [{"question": "...", "options": ["A", "B", "C", "D"], "answer": "The correct option exactly as written"}]. \n\nMaterial: ${text.substring(0, 15000)}`;
+                
+                await generateAndStartQuiz(prompt);
+                fileInput.value = ""; // Reset input
+            } catch (err) {
+                console.error(err);
+                document.getElementById('quiz-question').innerText = "Failed to read materials or build quiz.";
+                document.getElementById('quizLoader').style.display = 'none';
+                document.getElementById('quiz-options').style.display = 'grid';
+                fileInput.value = "";
+            }
+        };
+
+        // --- CORE: CALL GEMINI & START GAME ---
+        async function generateAndStartQuiz(prompt) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            
+            if (!res.ok) throw new Error("Gemini API Error");
+            
+            const data = await res.json();
+            const jsonText = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+            
+            quizData = JSON.parse(jsonText);
+            currentQuestionIndex = 0;
+            quizScore = 0;
+            
+            document.getElementById('quizLoader').style.display = 'none';
+            document.getElementById('quiz-options').style.display = 'grid';
+            renderQuizQuestion();
+        }
+
+        // --- RENDER THE QUESTION ---
+        window.renderQuizQuestion = () => {
+            if (currentQuestionIndex >= quizData.length) {
+                document.getElementById('quiz-question').innerText = `Quiz Complete! You scored ${quizScore}/${quizData.length} 🎉`;
+                document.getElementById('quiz-options').innerHTML = `<button class="quiz-btn q-blue" onclick="resetQuizMenu()">Play Again</button>`;
+                return;
+            }
+
+            const q = quizData[currentQuestionIndex];
+            document.getElementById('quiz-question').innerText = q.question;
+            
+            const colors = ['q-red', 'q-blue', 'q-yellow', 'q-green'];
+            let buttonsHtml = "";
+            q.options.forEach((opt, i) => {
+                const safeOpt = opt.replace(/'/g, "\\'").replace(/"/g, '&quot;'); 
+                buttonsHtml += `<button class="quiz-btn ${colors[i % 4]}" onclick="checkAnswer('${safeOpt}')">${opt}</button>`;
+            });
+            document.getElementById('quiz-options').innerHTML = buttonsHtml;
+        };
+
+        // --- CHECK THE ANSWER ---
+        window.checkAnswer = (selectedAnswer) => {
+            const correctAnswer = quizData[currentQuestionIndex].answer;
+            
+            if (selectedAnswer === correctAnswer) {
+                quizScore++;
+                showToast("Correct! 🔥", "success");
+            } else {
+                showToast(`Wrong! Answer: ${correctAnswer}`, "error");
+            }
+            
+            currentQuestionIndex++;
+            setTimeout(renderQuizQuestion, 1500); 
+        };
     </script>
 </body>
 </html>
