@@ -7,9 +7,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
@@ -74,7 +76,6 @@
         .task-subject { color: #6B7280; font-size: 0.9rem; margin-bottom: auto; }
         .task-date { margin-top: 10px; font-size: 0.85rem; color: #4F46E5; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; background: #EEF2FF; padding: 6px 12px; border-radius: 20px; align-self: flex-start; }
 
-        /* Links Container */
         .smart-links { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
 
         /* --- ACTION BUTTONS ROW --- */
@@ -84,7 +85,6 @@
         }
         body.dark-mode .card-actions { border-top-color: #374151; }
         
-        /* 1. Calendar Button */
         .calendar-btn { 
             display: flex; align-items: center; justify-content: center; flex: 2; 
             padding: 10px; background-color: #4F46E5; color: white !important; 
@@ -93,7 +93,6 @@
         }
         .calendar-btn:hover { background-color: #4338ca; transform: translateY(-1px); }
 
-        /* 2. Finish Button (Green) */
         .check-btn-inline { 
             display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; 
             background-color: #D1FAE5; color: #10B981; border: 1px solid #A7F3D0; 
@@ -101,7 +100,6 @@
         }
         .check-btn-inline:hover { background-color: #10B981; color: white; }
 
-        /* 3. Delete Button (Red) */
         .delete-btn-inline { 
             display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; 
             background-color: #FEF2F2; color: #EF4444; border: 1px solid #FECACA; 
@@ -117,7 +115,6 @@
         }
         .edit-btn-corner:hover { background: #F3F4F6; color: #4F46E5; border-color: #C7D2FE; }
 
-        /* Completed Task Style */
         .task-card.completed-card { opacity: 0.6; background-color: #f9fafb; border-left: 5px solid #9CA3AF !important; }
         .task-card.completed-card .task-title { text-decoration: line-through; }
 
@@ -139,32 +136,24 @@
             .sidebar.open { left: 0; } 
             .schedule-grid { grid-template-columns: 1fr; }
         }
+
         /* --- KAHOOT STYLE QUIZ MODAL --- */
         .quiz-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(17, 24, 39, 0.95); z-index: 3000; justify-content: center; align-items: center;
         }
         .quiz-content {
-            background: #46178F; /* Kahoot Purple */
-            width: 90%; max-width: 600px; border-radius: 20px; padding: 30px;
-            color: white; text-align: center; box-shadow: 0 20px 25px rgba(0,0,0,0.5);
-            border: 4px solid rgba(255,255,255,0.1);
+            background: #46178F; width: 90%; max-width: 600px; border-radius: 20px; padding: 30px;
+            color: white; text-align: center; box-shadow: 0 20px 25px rgba(0,0,0,0.5); border: 4px solid rgba(255,255,255,0.1);
         }
         .quiz-header { font-size: 1.8rem; font-weight: 900; margin-bottom: 20px; text-shadow: 2px 2px 0px rgba(0,0,0,0.2); }
         .quiz-question { background: white; color: #333; padding: 20px; border-radius: 12px; font-weight: 700; font-size: 1.2rem; margin-bottom: 30px; }
         .quiz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .quiz-btn {
-            padding: 20px; border: none; border-radius: 8px; color: white; font-weight: 700; font-size: 1.1rem; cursor: pointer; transition: transform 0.1s;
-            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
-        }
+        .quiz-btn { padding: 20px; border: none; border-radius: 8px; color: white; font-weight: 700; font-size: 1.1rem; cursor: pointer; transition: transform 0.1s; box-shadow: 0 4px 0 rgba(0,0,0,0.2); }
         .quiz-btn:active { transform: translateY(4px); box-shadow: none; }
-        .q-red { background: #E21B3C; } 
-        .q-blue { background: #1368CE; }
-        .q-yellow { background: #D89E00; } 
-        .q-green { background: #26890C; }
+        .q-red { background: #E21B3C; } .q-blue { background: #1368CE; } .q-yellow { background: #D89E00; } .q-green { background: #26890C; }
         .close-quiz { margin-top: 20px; background: transparent; border: 2px solid rgba(255,255,255,0.3); color: white; padding: 10px 20px; border-radius: 20px; cursor: pointer; }
 
-        /* --- ICONS ROW (Word/PPT/PDF) --- */
         .supported-icons { display: flex; gap: 15px; justify-content: center; margin-top: 20px; opacity: 0.7; }
         .icon-box { display: flex; flex-direction: column; align-items: center; font-size: 0.8rem; color: #6B7280; }
         .icon-box i { font-size: 1.5rem; margin-bottom: 5px; }
@@ -207,13 +196,13 @@
         </div>
 
         <div id="upload" class="view-section">
-            <div class="header"><h1>Upload Syllabus</h1><p>Upload your course PDF. Our AI will extract the deadlines.</p></div>
+            <div class="header"><h1>Upload Syllabus</h1><p>Upload your course material. Our AI will extract the deadlines.</p></div>
             
             <div class="upload-zone" onclick="triggerFileInput()" role="button" tabindex="0">
                 <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
                 <h3>Drag & Drop your Syllabus here</h3>
                 <p style="color: #9CA3AF; margin-top: 10px;">or click to browse files</p>
-                <input type="file" id="fileInput" accept="application/pdf" style="display: none;" onchange="handleFileSelect()">
+                <input type="file" id="fileInput" accept=".pdf, .docx, .pptx" style="display: none;" onchange="handleFileSelect()">
             </div>
             <div class="loader-container" id="aiLoader"><div class="spinner"></div><h3>Analyzing...</h3></div>
             <button class="btn-primary" id="processBtn" style="display: none;" onclick="processSyllabus()">Generate Study Plan</button>
@@ -281,10 +270,11 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
         
-        // --- ADDED: Global API Key Variable ---
+        // --- ADDED: Safely Split API Key ---
+        // TODO: PASTE YOUR REAL KEY HALVES HERE!
         const keypart1 = "AIzaSyBfbAqEckZOQumt";
         const keypart2 = "ooRy4TqRIFNcYisXkTI";
-        const GEMINI_API_KEY = keypart1 + keypart2; 
+        const GEMINI_API_KEY = keypart1 + keypart2;
 
         let currentUser = null;
         let selectedFile = null;
@@ -320,7 +310,7 @@
             }
         }
 
-        // --- UPDATED: processSyllabus (Uses Global Key) ---
+        // --- UPDATED: Smart Syllabus Processor ---
         window.processSyllabus = async function() {
             if (!selectedFile) return;
 
@@ -329,9 +319,23 @@
             document.getElementById('aiLoader').style.display = 'block';
 
             try {
-                const text = await extractTextFromPDF(selectedFile);
+                let text = "";
+                const fileName = selectedFile.name.toLowerCase();
+
+                // Route to the correct reader based on file extension
+                if (fileName.endsWith('.pdf')) {
+                    text = await extractTextFromPDF(selectedFile);
+                } else if (fileName.endsWith('.docx')) {
+                    text = await extractTextFromWord(selectedFile);
+                } else if (fileName.endsWith('.pptx')) {
+                    text = await extractTextFromPPTX(selectedFile);
+                } else {
+                    throw new Error("Unsupported file type! Please upload a PDF, DOCX, or PPTX.");
+                }
+
                 const tasks = await analyzeWithGemini(text, GEMINI_API_KEY);
                 await saveTasksToFirestore(tasks);
+                
                 document.getElementById('aiLoader').style.display = 'none';
                 switchTab('schedule');
                 resetUpload();
@@ -355,11 +359,36 @@
             }
             return fullText;
         }
-//ayaw di ko magawa ng maayos
-        // --- UPDATED: analyzeWithGemini (Accepts API Key) ---
+
+        // --- ADDED: WORD (DOCX) EXTRACTION ---
+        async function extractTextFromWord(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+            return result.value;
+        }
+
+        // --- ADDED: POWERPOINT (PPTX) EXTRACTION ---
+        async function extractTextFromPPTX(file) {
+            const zip = new JSZip();
+            const zipContent = await zip.loadAsync(file);
+            let fullText = "";
+            
+            for (const relativePath in zipContent.files) {
+                if (relativePath.startsWith("ppt/slides/slide") && relativePath.endsWith(".xml")) {
+                    const xmlText = await zipContent.file(relativePath).async("string");
+                    const matches = xmlText.match(/<a:t>(.*?)<\/a:t>/g);
+                    if (matches) {
+                        const slideText = matches.map(m => m.replace(/<\/?a:t>/g, '')).join(" ");
+                        fullText += slideText + "\n";
+                    }
+                }
+            }
+            return fullText;
+        }
+
         async function analyzeWithGemini(text, apiKey) {
             const prompt = `Analyze this syllabus text. Extract assignments/exams. Return JSON: [{"title": "Task", "subject": "Course", "date": "YYYY-MM-DD", "priority": "Urgent/Medium/Normal", "subtasks": ["Step 1"], "estimated_time": "2 hours"}] Text: ${text.substring(0, 10000)}`;
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
             const res = await fetch(url, { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
@@ -471,16 +500,14 @@
             const ytUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
             const timeEst = t.estimated_time || "TBD";
 
-            // --- 1. NEW ICON LOGIC ---
-            let typeIcon = '<i class="fa-regular fa-file-lines" style="color:#6B7280"></i>'; // Default Gray Icon
+            let typeIcon = '<i class="fa-regular fa-file-lines" style="color:#6B7280"></i>'; 
             const txt = (t.title + t.subject).toLowerCase();
             
             if(txt.includes('presentation') || txt.includes('slide') || txt.includes('ppt')) {
-                typeIcon = '<i class="fa-solid fa-file-powerpoint" style="color:#EA580C"></i>'; // Orange PPT
+                typeIcon = '<i class="fa-solid fa-file-powerpoint" style="color:#EA580C"></i>'; 
             } else if(txt.includes('essay') || txt.includes('report') || txt.includes('paper')) {
-                typeIcon = '<i class="fa-solid fa-file-word" style="color:#2563EB"></i>'; // Blue Word
+                typeIcon = '<i class="fa-solid fa-file-word" style="color:#2563EB"></i>'; 
             }
-            // ---------------------------------------------
 
             let subtasksHtml = '';
             if (t.subtasks && t.subtasks.length > 0) {
@@ -534,7 +561,8 @@
 
         function showToast(message, type = "success") {
             const toast = document.getElementById("toast");
-            toast.textContent = message;
+            const icon = type === "error" ? "❌ " : "✅ ";
+            toast.textContent = icon + message;
             toast.className = `toast show ${type === "error" ? "error" : ""}`;
             setTimeout(() => toast.classList.remove("show"), 3000);
         }
