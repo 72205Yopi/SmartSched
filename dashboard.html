@@ -663,7 +663,6 @@
         // --- CORE: CALL GEMINI & START GAME ---
         // --- CORE: CALL GEMINI & START GAME ---
         async function generateAndStartQuiz(prompt) {
-            // Using your upgraded 2.5-flash model!
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
             const res = await fetch(url, {
                 method: 'POST',
