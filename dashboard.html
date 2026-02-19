@@ -661,7 +661,9 @@
         };
 
         // --- CORE: CALL GEMINI & START GAME ---
+        // --- CORE: CALL GEMINI & START GAME ---
         async function generateAndStartQuiz(prompt) {
+            // Using your upgraded 2.5-flash model!
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
             const res = await fetch(url, {
                 method: 'POST',
@@ -672,9 +674,16 @@
             if (!res.ok) throw new Error("Gemini API Error");
             
             const data = await res.json();
-            const jsonText = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+            const rawText = data.candidates[0].content.parts[0].text;
             
-            quizData = JSON.parse(jsonText);
+            // BULLETPROOF JSON EXTRACTOR: Finds the first '[' and last ']' and ignores all other text
+            const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+            
+            if (!jsonMatch) {
+                throw new Error("Gemini did not return a valid quiz format.");
+            }
+            
+            quizData = JSON.parse(jsonMatch[0]);
             currentQuestionIndex = 0;
             quizScore = 0;
             
