@@ -253,7 +253,7 @@
             <button class="close-quiz" onclick="closeQuiz()">Exit Game</button>
         </div>
     </div>
-    
+
     <div id="feedbackFlash" class="flash-overlay"></div>
 
     <div id="editModal" class="modal-overlay">
@@ -735,19 +735,31 @@
             document.getElementById('quiz-options').innerHTML = buttonsHtml;
         };
 
-        // --- CHECK THE ANSWER ---
+        // --- CHECK THE ANSWER (WITH FULL SCREEN FLASH) ---
         window.checkAnswer = (selectedAnswer) => {
             const correctAnswer = quizData[currentQuestionIndex].answer;
+            const flash = document.getElementById('feedbackFlash'); // Targets our new overlay
             
             if (selectedAnswer === correctAnswer) {
                 quizScore++;
-                showToast("Correct! 🔥", "success");
+                // Show Green Screen
+                flash.className = 'flash-overlay flash-correct';
+                flash.innerHTML = '<i class="fa-solid fa-check" style="margin-right:20px;"></i> Correct!';
             } else {
-                showToast(`Wrong! Answer: ${correctAnswer}`, "error");
+                // Show Red Screen
+                flash.className = 'flash-overlay flash-wrong';
+                flash.innerHTML = `<div style="text-align:center;"><i class="fa-solid fa-xmark"></i> Wrong!<div style="font-size: 1.5rem; margin-top:15px; font-weight: 500; font-family: 'Inter', sans-serif; text-transform: none;">Correct Answer: ${correctAnswer}</div></div>`;
             }
             
-            currentQuestionIndex++;
-            setTimeout(renderQuizQuestion, 1500); 
+            // Display the flash overlay (This pops up OVER the quiz)
+            flash.style.display = 'flex';
+            
+            // Hide the flash after 1.8 seconds and move to next question
+            setTimeout(() => {
+                flash.style.display = 'none';
+                currentQuestionIndex++;
+                renderQuizQuestion(); 
+            }, 1800); 
         };
         // --- CLOSE THE MENU ---
         window.closeQuiz = () => {
