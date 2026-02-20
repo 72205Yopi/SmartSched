@@ -168,6 +168,55 @@
         .flash-wrong { background-color: rgba(226, 27, 60, 0.95); }   /* Kahoot Red */
         
         @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        /* --- PREMIUM TASK CARD BUTTONS --- */
+        .smart-links-premium {
+            display: flex; gap: 8px; margin-top: 15px; padding-top: 15px;
+            border-top: 1px solid #F3F4F6;
+        }
+        .premium-action-btn {
+            flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 10px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: 600;
+            text-decoration: none; transition: all 0.2s ease; background: #F9FAFB;
+            border: 1px solid #E5E7EB; color: #4B5563;
+        }
+        .premium-action-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+        
+        .btn-material:hover { background: #F3F4F6; color: #1F2937; border-color: #D1D5DB; }
+        .btn-google:hover { background: #EFF6FF; color: #1D4ED8; border-color: #BFDBFE; }
+        .btn-youtube:hover { background: #FEF2F2; color: #B91C1C; border-color: #FECACA; }
+        
+        body.dark-mode .smart-links-premium { border-top-color: #374151; }
+        body.dark-mode .premium-action-btn { background: #374151; border-color: #4B5563; color: #D1D5DB; }
+
+        /* --- BEAUTIFUL EMPTY STATE --- */
+        .empty-state-container {
+            grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 80px 20px; background: linear-gradient(180deg, #FFFFFF 0%, #F9FAFB 100%);
+            border-radius: 24px; border: 2px dashed #E5E7EB; text-align: center;
+        }
+        .empty-state-illustration {
+            width: 140px; height: 140px; background: #EEF2FF; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; margin-bottom: 24px;
+            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.15); position: relative;
+        }
+        .empty-state-illustration::after {
+            content: ''; position: absolute; width: 100%; height: 100%; border-radius: 50%;
+            border: 2px solid #C7D2FE; animation: pulseSoft 3s infinite;
+        }
+        @keyframes pulseSoft {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 0; }
+            100% { transform: scale(1); opacity: 0; }
+        }
+        .empty-state-icon { font-size: 4.5rem; color: #4F46E5; z-index: 2; }
+        .empty-state-title { font-size: 1.5rem; font-weight: 700; color: #1F2937; margin-bottom: 12px; }
+        .empty-state-text { font-size: 1rem; color: #6B7280; max-width: 360px; line-height: 1.6; }
+
+        body.dark-mode .empty-state-container { background: #1F2937; border-color: #374151; }
+        body.dark-mode .empty-state-illustration { background: #374151; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
+        body.dark-mode .empty-state-title { color: #F9FAFB; }
+        body.dark-mode .empty-state-text { color: #9CA3AF; }
     </style>
 </head>
 <body>
@@ -498,12 +547,15 @@
             document.getElementById('upcoming-count').innerText = active.length;
             document.getElementById('urgent-count').innerText = active.filter(t => t.priority === 'Urgent').length;
 
+            // --- REDESIGNED VISUAL EMPTY STATE ---
             if (active.length === 0) {
                 activeList.innerHTML = `
-                <div style="grid-column: 1/-1; text-align: center; color: #9CA3AF; padding: 60px; background: white; border-radius: 16px; border: 2px dashed #E5E7EB;">
-                    <i class="fa-solid fa-mug-hot" style="font-size: 3rem; margin-bottom: 20px; color: #E0E7FF;"></i>
-                    <h3 style="color: #374151; margin-bottom: 8px;">All caught up!</h3>
-                    <p style="font-size: 0.95rem;">Enjoy your free time.</p>
+                <div class="empty-state-container">
+                    <div class="empty-state-illustration">
+                        <i class="fa-solid fa-layer-group empty-state-icon"></i>
+                    </div>
+                    <h3 class="empty-state-title">Your desk is clear!</h3>
+                    <p class="empty-state-text">You have no pending tasks right now. Take a well-deserved break or upload a new syllabus to plan ahead.</p>
                 </div>`;
             } else {
                 activeList.innerHTML = active.map(t => generateTaskHTML(t, false)).join('');
@@ -520,7 +572,7 @@
             const cardClass = isDone ? `task-card completed-card` : `task-card ${t.priority}`;
             const cleanDate = t.date ? t.date.replace(/-/g, '') : ''; 
             const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.title)}&details=${encodeURIComponent(t.subject)}&dates=${cleanDate}/${cleanDate}`;
-            const searchQuery = encodeURIComponent(`${t.subject} ${t.title} tutorial`);
+            const searchQuery = encodeURIComponent(`${t.subject} ${t.title}`);
             const googleUrl = `https://www.google.com/search?q=${searchQuery}`;
             const ytUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
             const timeEst = t.estimated_time || "TBD";
@@ -545,7 +597,7 @@
 
             const actionButtons = isDone ? 
                 `<button class="delete-btn-inline" onclick="deleteTask('${t.id}')"><i class="fa-solid fa-trash"></i></button>` :
-                `<a href="${calUrl}" target="_blank" class="calendar-btn"><i class="fa-solid fa-calendar-plus" style="font-size: 1rem;"></i> Calendar</a>
+                `<a href="${calUrl}" target="_blank" class="calendar-btn" style="flex: 1.5; font-size: 0.8rem;"><i class="fa-solid fa-calendar-plus"></i></a>
                  <button class="check-btn-inline" onclick="markAsDone('${t.id}')" title="Finish Task"><i class="fa-solid fa-check"></i></button>
                  <button class="delete-btn-inline" onclick="deleteTask('${t.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>`;
 
@@ -565,9 +617,16 @@
                     <div class="task-subject"><i class="fa-solid fa-book"></i> ${t.subject}</div>
                     <div class="task-date"><i class="fa-regular fa-clock"></i> ${isDone ? "Completed" : t.date}</div>
 
-                    ${!isDone ? `<div class="smart-links">
-                        <a href="${googleUrl}" target="_blank" style="text-decoration: none; flex: 1; background: #EFF6FF; color: #1D4ED8; padding: 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; text-align: center; border: 1px solid #DBEAFE; transition: 0.2s;"><i class="fa-brands fa-google"></i> Google It</a>
-                        <a href="${ytUrl}" target="_blank" style="text-decoration: none; flex: 1; background: #FEF2F2; color: #B91C1C; padding: 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; text-align: center; border: 1px solid #FECACA; transition: 0.2s;"><i class="fa-brands fa-youtube"></i> Watch Video</a>
+                    ${!isDone ? `<div class="smart-links-premium">
+                        <a href="#" class="premium-action-btn btn-material" target="_blank">
+                            <i class="fa-regular fa-folder-open" style="color: #6B7280;"></i> Material
+                        </a>
+                        <a href="${googleUrl}" class="premium-action-btn btn-google" target="_blank">
+                            <i class="fa-brands fa-google" style="color: #4285F4;"></i> Google
+                        </a>
+                        <a href="${ytUrl}" class="premium-action-btn btn-youtube" target="_blank">
+                            <i class="fa-brands fa-youtube" style="color: #FF0000;"></i> Video
+                        </a>
                     </div>` : ''}
                     ${!isDone ? subtasksHtml : ''}
                 </div>
@@ -577,7 +636,6 @@
                 </div>
             </div>`;
         }
-
         function resetUpload() {
             document.querySelector('.upload-zone').style.display = 'block';
             document.querySelector('.upload-zone h3').innerText = "Click to Upload Syllabus (PDF)";
