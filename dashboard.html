@@ -282,7 +282,7 @@
             <span>Study Material</span>
             <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="closeMaterialModal()"></i>
         </div>
-        <div id="materialContent" style="flex: 1; overflow-y: auto; padding: 15px; background: #F9FAFB; border-radius: 8px; font-size: 0.95rem; white-space: pre-wrap; color: #374151; border: 1px solid #E5E7EB; line-height: 1.5;">
+        <div id="materialContent" style="flex: 1; overflow-y: auto; padding: 20px; background: #ffffff; border-radius: 8px; font-size: 1rem; color: #374151; border: 1px solid #E5E7EB; line-height: 1.6;">
             Loading...
         </div>
     </div>
@@ -519,20 +519,65 @@
     }
     window.closeEditModal = () => { document.getElementById('editModal').style.display = 'none'; editingTaskId = null; }
 
-    // --- TASK: VIEW MATERIAL MODAL ---
-    window.openMaterialModal = (taskId) => {
+       // --- TASK: VIEW AI-CLEANED MATERIAL ---
+    window.openMaterialModal = async (taskId) => {
         const task = globalTasks.find(t => t.id === taskId);
         if (!task) return;
         
         const contentDiv = document.getElementById('materialContent');
-        // Check if the task has saved text from Phase 1
-        if (task.originalText && task.originalText.trim() !== "") {
-            contentDiv.textContent = task.originalText;
-        } else {
-            contentDiv.innerHTML = `<div style="text-align:center; color:#9CA3AF; margin-top:20px;"><i class="fa-solid fa-file-circle-xmark" style="font-size: 2rem; margin-bottom: 10px;"></i><br>No material text was saved for this task.</div>`;
-        }
-        
         document.getElementById('materialModal').style.display = 'flex';
+
+        // 1. If we already cleaned it before, load it instantly!
+        if (task.cleanNotes) {
+            contentDiv.innerHTML = task.cleanNotes;
+            return;
+        }
+
+        // 2. If it's raw text, let's make the AI clean it up
+        if (task.originalText && task.originalText.trim() !== "") {
+            // Show a nice loading spinner while the AI works
+            contentDiv.innerHTML = `
+                <div style="text-align:center; padding: 40px;">
+                    <div class="spinner" style="margin: 0 auto 15px; border-top-color: #4F46E5;"></div>
+                    <h3 style="color: #4F46E5;">✨ AI is structuring your notes...</h3>
+                    <p style="color: #6B7280; font-size: 0.9rem;">This will only take a few seconds.</p>
+                </div>`;
+
+            try {
+                // Tell the AI to make it look beautiful
+                const prompt = `You are a study assistant. Convert this raw extracted text into clean, highly structured, and easy-to-read study notes. Use HTML formatting (use <h3> for headings, <ul> and <li> for bullet points, <strong> for key terms). DO NOT use markdown backticks like \`\`\`html. Output pure HTML. Raw Text: ${task.originalText.substring(0, 8000)}`;
+
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+                
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error("Google API Error");
+
+                // Clean up the AI's response to ensure it's pure HTML
+                let cleanHTML = data.candidates[0].content.parts[0].text.replace(/```html|```/g, '').trim();
+
+                // 3. Save it to Firestore so we never have to generate it again!
+                await updateDoc(doc(db, "tasks", taskId), { cleanNotes: cleanHTML });
+                
+                // Update the local array
+                task.cleanNotes = cleanHTML;
+                
+                // Show it to the user
+                contentDiv.innerHTML = cleanHTML;
+
+            } catch (err) {
+                console.error("AI Notes Error:", err);
+                // Fallback: If the AI fails, just show the raw text safely
+                contentDiv.innerHTML = `<div style="color: #EF4444; margin-bottom: 10px;">⚠️ AI formatting failed. Showing raw text:</div><div style="white-space: pre-wrap;">${task.originalText}</div>`;
+            }
+        } else {
+            contentDiv.innerHTML = `<div style="text-align:center; color:#9CA3AF; margin-top:40px;"><i class="fa-solid fa-file-circle-xmark" style="font-size: 3rem; margin-bottom: 15px;"></i><br><h3>No material text found</h3><p>Upload a syllabus to get started.</p></div>`;
+        }
     };
 
     window.closeMaterialModal = () => {
