@@ -619,7 +619,7 @@ function setBarHeight(id, percent, count) {
 
     async function analyzeWithGemini(text, apiKey) {
         const prompt = `Analyze this syllabus text. Extract assignments/exams. Return JSON: [{"title": "Task", "subject": "Course", "date": "YYYY-MM-DD", "priority": "Urgent/Medium/Normal", "subtasks": ["Step 1"], "estimated_time": "2 hours"}] Text: ${text.substring(0, 10000)}`;
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro:generateContent?key=${apiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
         try {
             const res = await fetch(url, {
@@ -755,7 +755,7 @@ function setBarHeight(id, percent, count) {
             contentDiv.innerHTML = `<div style="text-align:center; padding: 40px;"><div class="spinner" style="margin: 0 auto 15px; border-top-color: #4F46E5;"></div><h3 style="color: #4F46E5;">✨ AI is structuring your notes...</h3></div>`;
             try {
                 const prompt = `You are a study assistant. Convert this raw text into clean HTML study notes (h3 for titles, ul/li for lists). Output pure HTML. Text: ${task.originalText.substring(0, 8000)}`;
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-latest:generateContent?key=${GEMINI_API_KEY}`;
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
                 const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
                 const data = await res.json();
                 let cleanHTML = data.candidates[0].content.parts[0].text.replace(/```html|```/g, '').trim();
@@ -899,7 +899,7 @@ function setBarHeight(id, percent, count) {
     };
 
     async function generateAndStartQuiz(prompt) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro:generateContent?key=${GEMINI_API_KEY}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
         try {
             const res = await fetch(url, {
                 method: 'POST',
