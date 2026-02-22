@@ -442,22 +442,29 @@
     }
 
     async function sendNotificationEmail(status, message) {
-        if (!currentUser) return;
-
-        const templateParams = {
-            user_email: currentUser.email,
-            user_name: currentUser.displayName || "SmartSched Student",
-            status: status,
-            message: message
-        };
-
-        try {
-            await emailjs.send(EMAIL_SERVICE_ID, EMAIL_TEMPLATE_ID, templateParams);
-            console.log("Notification email sent:", status);
-        } catch (error) {
-            console.error("Email Engine Error:", error);
-        }
+    if (!currentUser) {
+        console.error("Email blocked: No user logged in.");
+        return;
     }
+
+    const templateParams = {
+        user_email: currentUser.email,
+        user_name: currentUser.displayName || "SmartSched Student",
+        status: status,
+        message: message
+    };
+
+    try {
+        await emailjs.send("service_vh9g29a", "template_bmgskui", templateParams);
+        console.log("✅ Email successfully sent to EmailJS!");
+
+        // Visual confirmation for your presentation
+        showToast("Notification email sent! 📧");
+    } catch (error) {
+        console.error("❌ EmailJS Error:", error);
+        // This will tell you exactly why it failed (e.g., "Invalid Template ID")
+    }
+}
 
     // --- SYLLABUS PROCESSOR ---
     window.processSyllabus = async function() {
