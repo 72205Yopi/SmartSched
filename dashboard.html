@@ -577,6 +577,31 @@
         loadTasksFromFirestore();
         showToast("Task completed ✅");
     };
+    window.saveEditTask = async () => {
+    if(!editingTaskId) return;
+
+    // 1. Gather the new values from your modal inputs
+    const updatedData = {
+        title: document.getElementById('editTitle').value,
+        subject: document.getElementById('editSubject').value,
+        date: document.getElementById('editDate').value,
+        priority: document.getElementById('editPriority').value
+    };
+
+    try {
+        // 2. Technical Spec: Update the specific document in Firestore
+        const taskRef = doc(db, "tasks", editingTaskId);
+        await updateDoc(taskRef, updatedData);
+
+        // 3. UI Feedback
+        closeEditModal();
+        loadTasksFromFirestore(); // Refresh the list to show the new details
+        showToast("Task updated successfully! ✨");
+    } catch (error) {
+        console.error("Edit Failed:", error);
+        showToast("Could not save changes.", "error");
+    }
+};
 
     window.deleteTask = async function(taskId) {
         const result = await Swal.fire({ title: 'Delete Task?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#EF4444' });
