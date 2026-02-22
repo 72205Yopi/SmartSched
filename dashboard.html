@@ -694,7 +694,31 @@ function setBarHeight(id, percent, count) {
         console.error("Update failed:", error);
     }
 };
+    // --- EDIT TASK MODAL LOGIC ---
+    window.openEditModal = (taskId) => {
+        // 1. Find the specific task the user clicked
+        const task = globalTasks.find(t => t.id === taskId);
+        if(!task) return;
+        
+        // 2. Lock in the ID so we know which one to save later
+        editingTaskId = taskId;
+        
+        // 3. Fill the popup with the current task details
+        document.getElementById('editTitle').value = task.title || "";
+        document.getElementById('editSubject').value = task.subject || "";
+        document.getElementById('editDate').value = task.date || "";
+        document.getElementById('editPriority').value = task.priority || "Normal";
+        
+        // 4. Show the modal!
+        document.getElementById('editModal').style.display = 'flex';
+    };
 
+    window.closeEditModal = () => { 
+        document.getElementById('editModal').style.display = 'none'; 
+        editingTaskId = null; 
+    };
+
+    
     window.saveEditTask = async () => {
         if(!editingTaskId) return;
         const updatedData = {
