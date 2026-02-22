@@ -672,41 +672,70 @@
 
     window.toggleSidebar = () => document.querySelector('.sidebar').classList.toggle('open');
 
-    // --- QUIZ MODULE ---
-    let quizData = [];
-    let currentQuestionIndex = 0;
-    let quizScore = 0;
-    window.openQuiz = () => { document.getElementById('quizModal').style.display = 'flex'; resetQuizMenu(); };
-    window.closeQuiz = () => { document.getElementById('quizModal').style.display = 'none'; };
-    window.resetQuizMenu = () => { document.getElementById('quizLoader').style.display = 'none'; document.getElementById('quiz-options').style.display = 'grid'; document.getElementById('quiz-question').innerText = "Choose how you want to study:"; };
-    window.startQuickQuiz = async () => {
-        if (!globalTasks.length) return;
-        document.getElementById('quiz-options').style.display = 'none';
-        document.getElementById('quizLoader').style.display = 'block';
-        const recentTask = [...globalTasks].reverse().find(t => t.originalText);
-        const prompt = `Create a 3-question MCQ quiz on: ${recentTask ? recentTask.originalText : "general study"}. Return JSON: [{"question": "...", "options": ["A", "B", "C", "D"], "answer": "..."}]`;
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
-        const data = await res.json();
-        quizData = JSON.parse(data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim());
-        currentQuestionIndex = 0; quizScore = 0;
-        document.getElementById('quizLoader').style.display = 'none';
-        document.getElementById('quiz-options').style.display = 'grid';
-        renderQuizQuestion();
-    };
-    function renderQuizQuestion() {
-        if (currentQuestionIndex >= quizData.length) { document.getElementById('quiz-question').innerText = `Score: ${quizScore}/${quizData.length}`; return; }
-        const q = quizData[currentQuestionIndex];
-        document.getElementById('quiz-question').innerText = q.question;
-        const colors = ['q-red', 'q-blue', 'q-yellow', 'q-green'];
-        document.getElementById('quiz-options').innerHTML = q.options.map((opt, i) => `<button class="quiz-btn ${colors[i]}" onclick="checkAnswer('${opt.replace(/'/g, "\\'")}')">${opt}</button>`).join('');
-    }
-    window.checkAnswer = (selected) => {
-        const modalContent = document.querySelector('.quiz-content');
-        if (selected === quizData[currentQuestionIndex].answer) { quizScore++; modalContent.classList.add('flash-correct'); }
-        else { modalContent.classList.add('flash-wrong'); }
-        setTimeout(() => { modalContent.classList.remove('flash-correct', 'flash-wrong'); currentQuestionIndex++; renderQuizQuestion(); }, 1200);
-    };
+    // --- UPDATED STUDY MODE (QUIZ) LOGIC ---
+let quizData = [];
+let currentQuestionIndex = 0;
+let quizScore = 0;
+let requestedQuestionCount = 3; // Default
+
+window.openQuiz = () => {
+    document.getElementById('quizModal').style.display = 'flex';
+    resetQuizMenu();
+};
+
+window.closeQuiz = () => {
+    document.getElementById('quizModal').style.display = 'none';
+    // --- RESET ON CLOSE ---
+    quizData = [];
+    currentQuestionIndex = 0;
+    quizScore = 0;
+};
+
+window.setQuestionCount = (count) => {
+    requestedQuestionCount = count;
+    // Highlight selected button UI
+    document.querySelectorAll('.count-btn').forEach(btn => btn.style.border = "none");
+    event.target.style.border = "2px solid white";
+};
+
+window.resetQuizMenu = () => {
+    document.getElementById('quizLoader').style.display = 'none';
+    document.getElementById('quiz-options').style.display = 'grid';
+    document.getElementById('quiz-question').innerText = "Select Number of Questions & Mode:";
+
+    // ADDED: Question Count Options UI
+    document.getElementById('quiz-options').innerHTML = `
+        <div style="grid-column: 1/-1; display:flex; gap:10px; justify-content:center; margin-bottom:15px;">
+            <button class="count-btn" onclick="setQuestionCount(3)" style="background:#E21B3C; color:white; padding:5px 15px; border-radius:8px; cursor:pointer;">3 Qs</button>
+            <button class="count-btn" onclick="setQuestionCount(5)" style="background:#1368CE; color:white; padding:5px 15px; border-radius:8px; cursor:pointer;">5 Qs</button>
+            <button class="count-btn" onclick="setQuestionCount(10)" style="background:#26890C; color:white; padding:5px 15px; border-radius:8px; cursor:pointer;">10 Qs</button>
+        </div>
+        <button class="quiz-btn q-blue" onclick="startQuickQuiz()">Quick Quiz (Tasks)</button>
+        <button class="quiz-btn q-green" onclick="document.getElementById('materialInput').click()">Upload Materials</button>
+    `;
+};
+
+// ... keep generateAndStartQuiz as is, but update the prompt logic:
+async function generateAndStartQuiz(promptBase) {
+    // Dynamically insert the requested count into the AI prompt
+    const prompt = promptBase.replace("3 quiz questions", `${requestedQuestionCount} quiz questions`);
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    });
+    const data = await res.json();
+    const raw = data.candidates[0].content.parts[0].text;
+    quizData = JSON.parse(raw.match(/\[[\s\S]*\]/)[0]);
+
+    currentQuestionIndex = 0;
+    quizScore = 0;
+    document.getElementById('quizLoader').style.display = 'none';
+    document.getElementById('quiz-options').style.display = 'grid';
+    renderQuizQuestion();
+}
 </script>
 </body>
 </html>
