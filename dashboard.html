@@ -672,11 +672,12 @@
 
     window.toggleSidebar = () => document.querySelector('.sidebar').classList.toggle('open');
 
-    // --- UPDATED STUDY MODE (QUIZ) LOGIC ---
+// --- UPDATED STUDY MODE (QUIZ) LOGIC ---
 let quizData = [];
 let currentQuestionIndex = 0;
 let quizScore = 0;
-let requestedQuestionCount = 3; // Default
+let requestedQuestionCount = 3; // Default count
+let lastUsedPrompt = ""; // Stores the last prompt for the Retry button
 
 window.openQuiz = () => {
     document.getElementById('quizModal').style.display = 'flex';
@@ -685,15 +686,16 @@ window.openQuiz = () => {
 
 window.closeQuiz = () => {
     document.getElementById('quizModal').style.display = 'none';
-    // --- RESET ON CLOSE ---
+    // Reset state on exit to ensure it's clean for the next session
     quizData = [];
     currentQuestionIndex = 0;
     quizScore = 0;
+    lastUsedPrompt = "";
 };
 
 window.setQuestionCount = (count) => {
     requestedQuestionCount = count;
-    // Highlight selected button UI
+    // UI Visual feedback for selection
     document.querySelectorAll('.count-btn').forEach(btn => btn.style.border = "none");
     event.target.style.border = "2px solid white";
 };
@@ -703,7 +705,7 @@ window.resetQuizMenu = () => {
     document.getElementById('quiz-options').style.display = 'grid';
     document.getElementById('quiz-question').innerText = "Select Number of Questions & Mode:";
 
-    // ADDED: Question Count Options UI
+    // UI: Question Count Selector + Mode Buttons
     document.getElementById('quiz-options').innerHTML = `
         <div style="grid-column: 1/-1; display:flex; gap:10px; justify-content:center; margin-bottom:15px;">
             <button class="count-btn" onclick="setQuestionCount(3)" style="background:#E21B3C; color:white; padding:5px 15px; border-radius:8px; cursor:pointer;">3 Qs</button>
@@ -715,27 +717,117 @@ window.resetQuizMenu = () => {
     `;
 };
 
-// ... keep generateAndStartQuiz as is, but update the prompt logic:
-async function generateAndStartQuiz(promptBase) {
-    // Dynamically insert the requested count into the AI prompt
-    const prompt = promptBase.replace("3 quiz questions", `${requestedQuestionCount} quiz questions`);
+window.startQuickQuiz = async () => {
+    if (globalTasks.length === 0) {
+        document.getElementById('quiz-question').innerText = "No tasks found! Upload a syllabus first.";
+        return;
+    }
 
+    document.getElementById('quiz-options').style.display = 'none';
+    document.getElementById('quizLoader').style.display = 'block';
+
+    // Context Gathering: Find the most recent task with text or use subject list
+    const recentTask = [...globalTasks].reverse().find(t => t.originalText && t.originalText.trim() !== "");
+    const contextText = recentTask ? recentTask.originalText : "";
+    const topics = globalTasks.map(t => `${t.subject}: ${t.title}`).join(", ");
+
+    // Store the prompt so the Retry button can reuse it
+    lastUsedPrompt = contextText
+        ? `Based strictly on this material: ${contextText.substring(0, 8000)}. Create a ${requestedQuestionCount} question multiple-choice quiz. Return ONLY JSON format: [{"question": "...", "options": ["A", "B", "C", "D"], "answer": "..."}]`
+        : `Create a ${requestedQuestionCount} question multiple-choice quiz based on these study topics: ${topics}. Return ONLY JSON format: [{"question": "...", "options": ["A", "B", "C", "D"], "answer": "..."}]`;
+
+    await generateAndStartQuiz(lastUsedPrompt);
+};
+
+window.handleMaterialUpload = async () => {
+    const fileInput = document.getElementById('materialInput');
+    if (fileInput.files.length === 0) return;
+
+    document.getElementById('quiz-options').style.display = 'none';
+    document.getElementById('quizLoader').style.display = 'block';
+
+    try {
+        const file = fileInput.files[0];
+        let text = "";
+        if (file.name.endsWith('.pdf')) text = await extractTextFromPDF(file);
+        else if (file.name.endsWith('.docx')) text = await extractTextFromWord(file);
+        else text = await extractTextFromPPTX(file);
+
+        lastUsedPrompt = `Based on: ${text.substring(0, 8000)}. Create a ${requestedQuestionCount} question multiple-choice quiz. Return ONLY JSON format: [{"question": "...", "options": ["A", "B", "C", "D"], "answer": "..."}]`;
+        await generateAndStartQuiz(lastUsedPrompt);
+    } catch (err) {
+        console.error("Material Upload Failed:", err);
+        resetQuizMenu();
+    }
+};
+
+async function generateAndStartQuiz(prompt) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-    const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-    });
-    const data = await res.json();
-    const raw = data.candidates[0].content.parts[0].text;
-    quizData = JSON.parse(raw.match(/\[[\s\S]*\]/)[0]);
 
-    currentQuestionIndex = 0;
-    quizScore = 0;
-    document.getElementById('quizLoader').style.display = 'none';
-    document.getElementById('quiz-options').style.display = 'grid';
-    renderQuizQuestion();
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+
+        const data = await res.json();
+
+        if (!data.candidates || data.candidates.length === 0) {
+            throw new Error("AI response was empty or blocked.");
+        }
+
+        const raw = data.candidates[0].content.parts[0].text;
+        quizData = JSON.parse(raw.match(/\[[\s\S]*\]/)[0]);
+
+        currentQuestionIndex = 0;
+        quizScore = 0;
+        document.getElementById('quizLoader').style.display = 'none';
+        document.getElementById('quiz-options').style.display = 'grid';
+        renderQuizQuestion();
+    } catch (err) {
+        console.error("Quiz Error:", err);
+        // --- ADDED RETRY BUTTON UI ---
+        document.getElementById('quizLoader').innerHTML = `
+            <div style="color:white; padding:20px;">
+                <p>⚠️ AI failed to generate the quiz.</p>
+                <button class="quiz-btn q-red" onclick="generateAndStartQuiz(lastUsedPrompt)" style="margin-top:10px;">Retry Generation</button>
+                <button class="close-quiz" onclick="resetQuizMenu()" style="border-color:white;">Back to Menu</button>
+            </div>`;
+    }
 }
+
+function renderQuizQuestion() {
+    if (currentQuestionIndex >= quizData.length) {
+        document.getElementById('quiz-question').innerText = `Finished! Score: ${quizScore}/${quizData.length}`;
+        document.getElementById('quiz-options').innerHTML = `<button class="quiz-btn q-blue" onclick="resetQuizMenu()">Play Again</button>`;
+        return;
+    }
+    const q = quizData[currentQuestionIndex];
+    document.getElementById('quiz-question').innerText = q.question;
+    const colors = ['q-red', 'q-blue', 'q-yellow', 'q-green'];
+    document.getElementById('quiz-options').innerHTML = q.options.map((opt, i) =>
+        `<button class="quiz-btn ${colors[i]}" onclick="checkAnswer('${opt.replace(/'/g, "\\'")}')">${opt}</button>`
+    ).join('');
+}
+
+window.checkAnswer = (selected) => {
+    const modalContent = document.querySelector('.quiz-content');
+    if (selected === quizData[currentQuestionIndex].answer) {
+        quizScore++;
+        modalContent.classList.add('flash-correct');
+        showToast("Correct! 🔥", "success");
+    } else {
+        modalContent.classList.add('flash-wrong');
+        showToast(`Wrong! Answer: ${quizData[currentQuestionIndex].answer}`, "error");
+    }
+
+    setTimeout(() => {
+        modalContent.classList.remove('flash-correct', 'flash-wrong');
+        currentQuestionIndex++;
+        renderQuizQuestion();
+    }, 1200);
+};
 </script>
 </body>
 </html>
