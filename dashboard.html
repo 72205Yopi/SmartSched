@@ -762,7 +762,7 @@ window.handleMaterialUpload = async () => {
 };
 
 async function generateAndStartQuiz(prompt) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     try {
         const res = await fetch(url, {
@@ -774,25 +774,34 @@ async function generateAndStartQuiz(prompt) {
         const data = await res.json();
 
         if (!data.candidates || data.candidates.length === 0) {
-            throw new Error("AI response was empty or blocked.");
+            throw new Error("AI response was blocked or empty.");
         }
 
-        const raw = data.candidates[0].content.parts[0].text;
-        quizData = JSON.parse(raw.match(/\[[\s\S]*\]/)[0]);
+        let raw = data.candidates[0].content.parts[0].text;
+
+        // 2. THE SHIELD: Strip markdown backticks if AI accidentally includes them
+        const cleanedJson = raw.replace(/```json|```/g, '').trim();
+        const jsonMatch = cleanedJson.match(/\[[\s\S]*\]/);
+
+        if (!jsonMatch) throw new Error("Invalid JSON format from AI");
+
+        quizData = JSON.parse(jsonMatch[0]);
 
         currentQuestionIndex = 0;
         quizScore = 0;
         document.getElementById('quizLoader').style.display = 'none';
         document.getElementById('quiz-options').style.display = 'grid';
         renderQuizQuestion();
+
     } catch (err) {
-        console.error("Quiz Error:", err);
-        // --- ADDED RETRY BUTTON UI ---
+        console.error("Quiz Error Details:", err);
+        // Error UI with the Retry button you requested
         document.getElementById('quizLoader').innerHTML = `
             <div style="color:white; padding:20px;">
                 <p>⚠️ AI failed to generate the quiz.</p>
+                <p style="font-size:0.8rem; opacity:0.7; margin-bottom:15px;">Reason: ${err.message}</p>
                 <button class="quiz-btn q-red" onclick="generateAndStartQuiz(lastUsedPrompt)" style="margin-top:10px;">Retry Generation</button>
-                <button class="close-quiz" onclick="resetQuizMenu()" style="border-color:white;">Back to Menu</button>
+                <button class="close-quiz" onclick="resetQuizMenu()" style="border-color:white; margin-top:10px;">Back to Menu</button>
             </div>`;
     }
 }
