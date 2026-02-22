@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartSched | Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -13,6 +13,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
     <style>
         /* --- CSS STYLES --- */
@@ -24,6 +26,7 @@
             --white: #ffffff;
             --success: #10B981;
             --urgent: #EF4444;
+            --warning: #F59E0B;
         }
 
         /* Dark Mode */
@@ -34,6 +37,9 @@
         body.dark-mode .modal-content { background-color: #1F2937; color: white; }
         body.dark-mode .sidebar { border-right-color: #374151; background-color: #1F2937; }
         body.dark-mode .timer-card { background: #374151 !important; border-color: #4B5563 !important; }
+
+        /* Streak Mode UI Reward */
+        body.streak-mode { border: 8px solid var(--warning); transition: all 0.5s ease; }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body { display: flex; height: 100vh; background-color: var(--light); color: var(--dark); transition: background-color 0.3s; }
@@ -51,6 +57,11 @@
 
         .view-section { display: none; animation: fadeIn 0.4s ease; }
         .view-section.active { display: block; }
+
+        /* Analytics Bars */
+        .analytics-box { display: flex; align-items: flex-end; gap: 15px; height: 100px; margin-top: 15px; }
+        .bar { flex: 1; border-radius: 4px 4px 0 0; position: relative; min-height: 5px; transition: height 0.8s ease; }
+        .bar span { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 0.7rem; font-weight: 600; }
 
         .upload-zone { border: 2px dashed #9CA3AF; border-radius: 12px; padding: 50px; text-align: center; background-color: var(--white); transition: 0.3s; cursor: pointer; }
         .upload-zone:hover { border-color: var(--primary); background-color: #F9FAFB; }
@@ -165,11 +176,11 @@
         .flash-correct { animation: flashGreen 1s ease; }
         .flash-wrong { animation: flashRed 1s ease; }
         @keyframes flashGreen { 0%, 100% { background-color: #46178F; } 50% { background-color: #26890C; } }
-        @keyframes flashRed { 
-            0%, 100% { background-color: #46178F; transform: translateX(0); } 
-            20%, 60% { transform: translateX(-10px); } 
-            40%, 80% { transform: translateX(10px); } 
-            50% { background-color: #E21B3C; } 
+        @keyframes flashRed {
+            0%, 100% { background-color: #46178F; transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+            50% { background-color: #E21B3C; }
         }
     </style>
 </head>
@@ -196,13 +207,14 @@
     </div>
 
     <div class="timer-card" style="margin-top: 20px; padding: 15px; background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb; text-align: center;">
-        <p style="font-size: 0.7rem; font-weight: 700; color: #6B7280; text-transform: uppercase; margin-bottom: 8px;">Pomodoro</p>
+        <p style="font-size: 0.7rem; font-weight: 700; color: #6B7280; text-transform: uppercase; margin-bottom: 8px;">Focus Session</p>
         <div id="timer-display" style="font-size: 1.6rem; font-weight: 700; color: #4F46E5; margin-bottom: 10px;">25:00</div>
         <div style="display: flex; gap: 8px; justify-content: center;">
             <button onclick="startTimer()" style="background:#4F46E5; color:white; border:none; padding:8px; border-radius:6px; cursor:pointer; width:35px;"><i class="fa-solid fa-play"></i></button>
             <button onclick="pauseTimer()" style="background:#9CA3AF; color:white; border:none; padding:8px; border-radius:6px; cursor:pointer; width:35px;"><i class="fa-solid fa-pause"></i></button>
             <button onclick="resetTimer()" style="background:#fff; color:#4F46E5; border:1px solid #E5E7EB; padding:8px; border-radius:6px; cursor:pointer; width:35px;"><i class="fa-solid fa-rotate-right"></i></button>
         </div>
+        <div id="streak-counter" style="margin-top: 10px; font-size: 0.75rem; color: var(--warning); font-weight: 700;">Streak: 0 🔥</div>
     </div>
 
     <div class="nav-item" onclick="toggleDarkMode()" style="margin-top: auto;"><i class="fa-solid fa-moon"></i> Dark Mode</div>
@@ -211,11 +223,22 @@
 
 <div class="main-content">
     <div id="dashboard" class="view-section active">
-        <div class="header"><h1>Hello, Student! 👋</h1><p>Here is your academic overview.</p></div>
-        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-            <div class="task-card" style="flex: 1; border-left-color: var(--success); min-height: 150px;"><h3>Total Tasks</h3><h1 style="font-size: 2.5rem; margin: 10px 0;" id="total-count">0</h1><p style="color: #6B7280;">Saved in Database</p></div>
-            <div class="task-card" style="flex: 1; border-left-color: #F59E0B; min-height: 150px;"><h3>Upcoming</h3><h1 style="font-size: 2.5rem; margin: 10px 0;" id="upcoming-count">0</h1><p style="color: #6B7280;">Deadlines</p></div>
-            <div class="task-card" style="flex: 1; border-left-color: #EF4444; min-height: 150px;"><h3>Urgent</h3><h1 style="font-size: 2.5rem; margin: 10px 0;" id="urgent-count">0</h1><p style="color: #6B7280;">High Priority</p></div>
+        <div class="header"><h1>Hello, Student! 👋</h1><p>Education that works at NU Dasmariñas.</p></div>
+
+        <div id="pacing-suggestion" style="display:none; margin-bottom: 25px;"></div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            <div class="task-card" style="grid-column: 1/-1; min-height: auto;">
+                <h3>Focus Performance</h3>
+                <div class="analytics-box">
+                    <div id="bar-done" class="bar" style="background: var(--success);"><span>Done</span></div>
+                    <div id="bar-overdue" class="bar" style="background: var(--urgent);"><span>Overdue</span></div>
+                    <div id="bar-pending" class="bar" style="background: var(--primary);"><span>Pending</span></div>
+                </div>
+            </div>
+
+            <div class="task-card" style="flex: 1; border-left-color: #F59E0B; min-height: 150px;"><h3>Upcoming</h3><h1 style="font-size: 2.5rem;" id="upcoming-count">0</h1><p style="color: #6B7280;">Deadlines</p></div>
+            <div class="task-card" style="flex: 1; border-left-color: #EF4444; min-height: 150px;"><h3>Urgent</h3><h1 style="font-size: 2.5rem;" id="urgent-count">0</h1><p style="color: #6B7280;">High Priority</p></div>
         </div>
     </div>
 
@@ -309,12 +332,18 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
+    // EMAIL ENGINE CONFIG
+    emailjs.init("QY9ExQQ0b6B3ZLdl3");
+    const EMAIL_SERVICE_ID = "service_vh9g29a";
+    const EMAIL_TEMPLATE_ID = "template_bmgskui";
+
     const GEMINI_API_KEY = atob("QUl6YVN5QmtLb0FJMm1hYTZaQzJiczdpZzZMX0VER2d0ZFlMZ0dN");
 
     let currentUser = null;
     let selectedFile = null;
     let globalTasks = [];
     let editingTaskId = null;
+    let focusStreak = 0;
 
     onAuthStateChanged(auth, (user) => {
         if (user) { currentUser = user; loadTasksFromFirestore(); }
@@ -329,14 +358,17 @@
     };
 
     window.toggleDarkMode = () => document.body.classList.toggle('dark-mode');
+
     window.switchTab = (tabId) => {
         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
         document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
         const activeNav = Array.from(document.querySelectorAll('.nav-item')).find(nav => nav.innerText.toLowerCase().includes(tabId));
         if(activeNav) activeNav.classList.add('active');
         document.getElementById(tabId).classList.add('active');
+        if(tabId === 'dashboard') updateAnalytics();
         document.querySelector('.sidebar').classList.remove('open');
     }
+
     window.triggerFileInput = () => document.getElementById('fileInput').click();
     window.handleFileSelect = () => {
         const f = document.getElementById('fileInput');
@@ -347,7 +379,76 @@
         }
     }
 
-    // --- BACKEND LOGIC: SYLLABUS PROCESSOR ---
+    // --- ANALYTICS & INTELLIGENT PACING ENGINE ---
+    function updateAnalytics() {
+        if(!globalTasks.length) return;
+        const now = new Date();
+        const done = globalTasks.filter(t => t.completed).length;
+        const overdue = globalTasks.filter(t => !t.completed && new Date(t.date) < now).length;
+        const pending = globalTasks.filter(t => !t.completed && new Date(t.date) >= now).length;
+        const total = globalTasks.length;
+
+        setBarHeight('bar-done', (done / total) * 100, done);
+        setBarHeight('bar-overdue', (overdue / total) * 100, overdue);
+        setBarHeight('bar-pending', (pending / total) * 100, pending);
+
+        // Adaptive Pacing Logic
+        const pacingDiv = document.getElementById('pacing-suggestion');
+        if(overdue > 2) {
+            pacingDiv.style.display = 'block';
+            pacingDiv.innerHTML = `<div style="background:#FFFBEB; border:1px solid #FCD34B; padding:15px; border-radius:12px; color:#92400E;">
+                <i class="fa-solid fa-brain"></i> <b>Adaptive Suggestion:</b> You have ${overdue} overdue tasks. Prioritize clearing small subtasks now to free up a Deep Work block tomorrow.
+            </div>`;
+        } else { pacingDiv.style.display = 'none'; }
+    }
+
+    function setBarHeight(id, percent, count) {
+        const el = document.getElementById(id);
+        el.style.height = `${Math.max(percent, 5)}%`;
+        el.querySelector('span').innerText = `${count} ${el.id.split('-')[1]}`;
+    }
+
+    // --- POMODORO & GAMIFICATION ENGINE ---
+    let timerInterval;
+    let timeLeft = 25 * 60;
+
+    window.startTimer = () => { if (!timerInterval) timerInterval = setInterval(updateTimer, 1000); };
+    window.pauseTimer = () => { clearInterval(timerInterval); timerInterval = null; };
+    window.resetTimer = () => { pauseTimer(); timeLeft = 25 * 60; updateTimerUI(); };
+
+    function updateTimer() {
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            focusStreak++;
+            document.getElementById('streak-counter').innerText = `Streak: ${focusStreak} 🔥`;
+
+            // Streak Reward
+            if(focusStreak >= 3) {
+                document.body.classList.add('streak-mode');
+                Swal.fire('Elite Focus! 🔥', '3 sessions complete. You’ve unlocked the elite UI theme.', 'success');
+            } else {
+                Swal.fire('Session Complete!', 'Take a 5-minute break.', 'success');
+            }
+            sendNotificationEmail("Study Goal Reached", `Congrats! You completed focus session #${focusStreak}.`);
+            resetTimer();
+        } else { timeLeft--; updateTimerUI(); }
+    }
+
+    function updateTimerUI() {
+        const mins = Math.floor(timeLeft / 60);
+        const secs = timeLeft % 60;
+        document.getElementById('timer-display').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    async function sendNotificationEmail(status, message) {
+        if (!currentUser) return;
+        const templateParams = { user_email: currentUser.email, user_name: currentUser.displayName || "Student", status: status, message: message };
+        try { await emailjs.send(EMAIL_SERVICE_ID, EMAIL_TEMPLATE_ID, templateParams); }
+        catch (err) { console.error("Email failed:", err); }
+    }
+
+    // --- SYLLABUS PROCESSOR ---
     window.processSyllabus = async function() {
         if (!selectedFile) return;
         document.querySelector('.upload-zone').style.display = 'none';
@@ -403,9 +504,7 @@
             if (relativePath.startsWith("ppt/slides/slide") && relativePath.endsWith(".xml")) {
                 const xmlText = await zipContent.file(relativePath).async("string");
                 const matches = xmlText.match(/<a:t>(.*?)<\/a:t>/g);
-                if (matches) {
-                    fullText += matches.map(m => m.replace(/<\/?a:t>/g, '')).join(" ") + "\n";
-                }
+                if (matches) { fullText += matches.map(m => m.replace(/<\/?a:t>/g, '')).join(" ") + "\n"; }
             }
         }
         return fullText;
@@ -414,28 +513,17 @@
     async function analyzeWithGemini(text, apiKey) {
         const prompt = `Analyze this syllabus text. Extract assignments/exams. Return JSON: [{"title": "Task", "subject": "Course", "date": "YYYY-MM-DD", "priority": "Urgent/Medium/Normal", "subtasks": ["Step 1"], "estimated_time": "2 hours"}] Text: ${text.substring(0, 10000)}`;
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-        
+
         try {
             const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
-            
             const data = await res.json();
-
-            // THE SHIELD: If Google rejects it, print the RAW error so we can read it!
-            if (!res.ok || !data.candidates) {
-                console.error("🚨 GOOGLE'S RAW ERROR:", data);
-                throw new Error(data.error?.message || "Google rejected the API key or request.");
-            }
-
+            if (!res.ok || !data.candidates) { throw new Error(data.error?.message || "Google rejected the request."); }
             return JSON.parse(data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim());
-            
-        } catch (error) {
-            console.error("Caught Error:", error);
-            throw error; // This sends the real error to your SweetAlert popup
-        }
+        } catch (error) { throw error; }
     }
 
     async function saveTasksToFirestore(tasks, rawText = "") {
@@ -460,14 +548,12 @@
         renderTasks(globalTasks);
     }
 
-    // --- TASK: RENDER TASKS WITH EMPTY STATES ---
     function renderTasks(tasks) {
         const activeList = document.getElementById('taskList');
         const completedList = document.getElementById('completedTaskList');
         const active = tasks.filter(t => !t.completed);
         const completed = tasks.filter(t => t.completed);
 
-        document.getElementById('total-count').innerText = tasks.length;
         document.getElementById('upcoming-count').innerText = active.length;
         document.getElementById('urgent-count').innerText = active.filter(t => t.priority === 'Urgent').length;
 
@@ -477,140 +563,54 @@
                 <i class="fa-solid fa-mug-hot" style="font-size: 3rem; margin-bottom: 20px; color: #E0E7FF;"></i>
                 <h3 style="color: #374151; margin-bottom: 8px;">All caught up!</h3>
                 <p style="font-size: 0.95rem;">You have no active tasks. Upload a syllabus to start.</p>
-                <button class="btn-primary" onclick="switchTab('upload')" style="margin-top:15px; padding: 10px 20px;">Get Started</button>
             </div>`;
         } else {
             activeList.innerHTML = active.map(t => generateTaskHTML(t, false)).join('');
         }
 
-        if (completed.length === 0) {
-            completedList.innerHTML = `<div style="color:#9CA3AF; padding: 20px;">No completed tasks yet.</div>`;
-        } else {
-            completedList.innerHTML = completed.map(t => generateTaskHTML(t, true)).join('');
-        }
-    }
-
-    window.deleteTask = async function(taskId) {
-        const result = await Swal.fire({
-            title: 'Delete Task?', text: "You cannot undo this.", icon: 'warning',
-            showCancelButton: true, confirmButtonColor: '#EF4444', confirmButtonText: 'Delete'
-        });
-        if (result.isConfirmed) {
-            await deleteDoc(doc(db, "tasks", taskId));
-            loadTasksFromFirestore();
-        }
+        completedList.innerHTML = completed.length === 0 ? `<div style="color:#9CA3AF; padding: 20px;">No completed tasks yet.</div>` : completed.map(t => generateTaskHTML(t, true)).join('');
+        updateAnalytics();
     }
 
     window.markAsDone = async function(taskId) {
         await updateDoc(doc(db, "tasks", taskId), { completed: true });
         loadTasksFromFirestore();
         showToast("Task completed ✅");
-    }
+    };
 
-    window.openEditModal = (taskId) => {
-        const task = globalTasks.find(t => t.id === taskId);
-        if(!task) return;
-        editingTaskId = taskId;
-        document.getElementById('editTitle').value = task.title;
-        document.getElementById('editSubject').value = task.subject;
-        document.getElementById('editDate').value = task.date;
-        document.getElementById('editPriority').value = task.priority;
-        document.getElementById('editModal').style.display = 'flex';
-    }
-    window.closeEditModal = () => { document.getElementById('editModal').style.display = 'none'; editingTaskId = null; }
+    window.deleteTask = async function(taskId) {
+        const result = await Swal.fire({ title: 'Delete Task?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#EF4444' });
+        if (result.isConfirmed) { await deleteDoc(doc(db, "tasks", taskId)); loadTasksFromFirestore(); }
+    };
 
-       // --- TASK: VIEW AI-CLEANED MATERIAL ---
+    // --- MATERIAL MODAL ENGINE ---
     window.openMaterialModal = async (taskId) => {
         const task = globalTasks.find(t => t.id === taskId);
         if (!task) return;
-        
         const contentDiv = document.getElementById('materialContent');
         document.getElementById('materialModal').style.display = 'flex';
-
-        // 1. If we already cleaned it before, load it instantly!
-        if (task.cleanNotes) {
-            contentDiv.innerHTML = task.cleanNotes;
-            return;
-        }
-
-        // 2. If it's raw text, let's make the AI clean it up
+        if (task.cleanNotes) { contentDiv.innerHTML = task.cleanNotes; return; }
         if (task.originalText && task.originalText.trim() !== "") {
-            // Show a nice loading spinner while the AI works
-            contentDiv.innerHTML = `
-                <div style="text-align:center; padding: 40px;">
-                    <div class="spinner" style="margin: 0 auto 15px; border-top-color: #4F46E5;"></div>
-                    <h3 style="color: #4F46E5;">✨ AI is structuring your notes...</h3>
-                    <p style="color: #6B7280; font-size: 0.9rem;">This will only take a few seconds.</p>
-                </div>`;
-
+            contentDiv.innerHTML = `<div style="text-align:center; padding: 40px;"><div class="spinner" style="margin: 0 auto 15px; border-top-color: #4F46E5;"></div><h3 style="color: #4F46E5;">✨ AI is structuring your notes...</h3></div>`;
             try {
-                // Tell the AI to make it look beautiful
-                const prompt = `You are a study assistant. Convert this raw extracted text into clean, highly structured, and easy-to-read study notes. Use HTML formatting (use <h3> for headings, <ul> and <li> for bullet points, <strong> for key terms). DO NOT use markdown backticks like \`\`\`html. Output pure HTML. Raw Text: ${task.originalText.substring(0, 8000)}`;
-
+                const prompt = `You are a study assistant. Convert this raw text into clean HTML study notes (h3 for titles, ul/li for lists). Output pure HTML. Text: ${task.originalText.substring(0, 8000)}`;
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
-                
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-
+                const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
                 const data = await res.json();
-                if (!res.ok) throw new Error("Google API Error");
-
-                // Clean up the AI's response to ensure it's pure HTML
                 let cleanHTML = data.candidates[0].content.parts[0].text.replace(/```html|```/g, '').trim();
-
-                // 3. Save it to Firestore so we never have to generate it again!
                 await updateDoc(doc(db, "tasks", taskId), { cleanNotes: cleanHTML });
-                
-                // Update the local array
                 task.cleanNotes = cleanHTML;
-                
-                // Show it to the user
                 contentDiv.innerHTML = cleanHTML;
-
-            } catch (err) {
-                console.error("AI Notes Error:", err);
-                // Fallback: If the AI fails, just show the raw text safely
-                contentDiv.innerHTML = `<div style="color: #EF4444; margin-bottom: 10px;">⚠️ AI formatting failed. Showing raw text:</div><div style="white-space: pre-wrap;">${task.originalText}</div>`;
-            }
-        } else {
-            contentDiv.innerHTML = `<div style="text-align:center; color:#9CA3AF; margin-top:40px;"><i class="fa-solid fa-file-circle-xmark" style="font-size: 3rem; margin-bottom: 15px;"></i><br><h3>No material text found</h3><p>Upload a syllabus to get started.</p></div>`;
-        }
+            } catch (err) { contentDiv.innerHTML = `<div style="white-space: pre-wrap;">${task.originalText}</div>`; }
+        } else { contentDiv.innerHTML = `<h3>No material found.</h3>`; }
     };
-
-    window.closeMaterialModal = () => {
-        document.getElementById('materialModal').style.display = 'none';
-    };
-
-    window.saveEditTask = async () => {
-        if(!editingTaskId) return;
-        const data = {
-            title: document.getElementById('editTitle').value,
-            subject: document.getElementById('editSubject').value,
-            date: document.getElementById('editDate').value,
-            priority: document.getElementById('editPriority').value
-        };
-        await updateDoc(doc(db, "tasks", editingTaskId), data);
-        closeEditModal();
-        loadTasksFromFirestore();
-    }
+    window.closeMaterialModal = () => document.getElementById('materialModal').style.display = 'none';
 
     function generateTaskHTML(t, isDone) {
         const cardClass = isDone ? `task-card completed-card` : `task-card ${t.priority}`;
         const cleanDate = t.date ? t.date.replace(/-/g, '') : '';
         const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.title)}&dates=${cleanDate}/${cleanDate}`;
         const searchQuery = encodeURIComponent(`${t.subject} ${t.title}`);
-        const googleUrl = `https://www.google.com/search?q=${searchQuery}`;
-        const ytUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
-
-        const actionButtons = isDone ?
-            `<button class="delete-btn-inline" onclick="deleteTask('${t.id}')"><i class="fa-solid fa-trash"></i></button>` :
-            `<a href="${calUrl}" target="_blank" class="calendar-btn"><i class="fa-solid fa-calendar-plus"></i> Calendar</a>
-             <button class="check-btn-inline" onclick="markAsDone('${t.id}')"><i class="fa-solid fa-check"></i></button>
-             <button class="delete-btn-inline" onclick="deleteTask('${t.id}')"><i class="fa-solid fa-trash"></i></button>`;
-
         return `
         <div class="${cardClass}">
             ${!isDone ? `<button class="edit-btn-corner" onclick="openEditModal('${t.id}')"><i class="fa-solid fa-pencil"></i></button>` : ''}
@@ -619,179 +619,68 @@
                 <div class="task-subject"><i class="fa-solid fa-book"></i> ${t.subject}</div>
                 <div class="task-date"><i class="fa-regular fa-clock"></i> ${isDone ? "Completed" : t.date}</div>
                 ${!isDone ? `<div class="smart-links">
-                    <button onclick="openMaterialModal('${t.id}')" style="flex:1; background:#F3F4F6; color:#374151; padding:8px; border-radius:6px; font-size:0.8rem; border:none; cursor:pointer; transition: 0.2s;"><i class="fa-solid fa-file-lines"></i> Notes</button>
-                    <a href="${googleUrl}" target="_blank" style="text-decoration:none; flex:1; background:#EFF6FF; color:#1D4ED8; padding:8px; border-radius:6px; font-size:0.8rem; text-align:center;"><i class="fa-brands fa-google"></i> Search</a>
-                    <a href="${ytUrl}" target="_blank" style="text-decoration:none; flex:1; background:#FEF2F2; color:#B91C1C; padding:8px; border-radius:6px; font-size:0.8rem; text-align:center;"><i class="fa-brands fa-youtube"></i> Video</a>
+                    <button onclick="openMaterialModal('${t.id}')" style="flex:1; background:#F3F4F6; color:#374151; padding:8px; border-radius:6px; font-size:0.8rem; border:none; cursor:pointer;"><i class="fa-solid fa-file-lines"></i> Notes</button>
+                    <a href="https://www.google.com/search?q=${searchQuery}" target="_blank" style="text-decoration:none; flex:1; background:#EFF6FF; color:#1D4ED8; padding:8px; border-radius:6px; font-size:0.8rem; text-align:center;"><i class="fa-brands fa-google"></i> Search</a>
+                    <a href="https://www.youtube.com/results?search_query=${searchQuery}" target="_blank" style="text-decoration:none; flex:1; background:#FEF2F2; color:#B91C1C; padding:8px; border-radius:6px; font-size:0.8rem; text-align:center;"><i class="fa-brands fa-youtube"></i> Video</a>
                 </div>` : ''}
             </div>
-            <div class="card-actions">${actionButtons}</div>
+            <div class="card-actions">
+                ${isDone ? `<button class="delete-btn-inline" onclick="deleteTask('${t.id}')"><i class="fa-solid fa-trash"></i></button>` : `
+                <a href="${calUrl}" target="_blank" class="calendar-btn"><i class="fa-solid fa-calendar-plus"></i> Calendar</a>
+                <button class="check-btn-inline" onclick="markAsDone('${t.id}')"><i class="fa-solid fa-check"></i></button>
+                <button class="delete-btn-inline" onclick="deleteTask('${t.id}')"><i class="fa-solid fa-trash"></i></button>`}
+            </div>
         </div>`;
     }
 
     function resetUpload() {
         document.querySelector('.upload-zone').style.display = 'block';
-        document.querySelector('.upload-zone h3').innerText = "Drag & Drop your Syllabus here";
         document.getElementById('processBtn').style.display = 'none';
     }
 
     function showToast(message, type = "success") {
         const toast = document.getElementById("toast");
-        toast.textContent = (type === "error" ? "❌ " : "✅ ") + message;
+        toast.textContent = message;
         toast.className = `toast show`;
         setTimeout(() => toast.classList.remove("show"), 3000);
     }
 
-    // --- TASK: MOBILE RESPONSIVENESS JS ---
-    window.toggleSidebar = () => {
-        document.querySelector('.sidebar').classList.toggle('open');
-    }
+    window.toggleSidebar = () => document.querySelector('.sidebar').classList.toggle('open');
 
-    // --- TASK: POMODORO TIMER JS ---
-    let timerInterval;
-    let timeLeft = 25 * 60;
-    let isBreak = false;
-
-    window.startTimer = () => {
-        if (timerInterval) return;
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            updateTimerDisplay();
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-                isBreak = !isBreak;
-                timeLeft = isBreak ? 5 * 60 : 25 * 60;
-                Swal.fire(isBreak ? 'Break Time!' : 'Work Time!', isBreak ? 'Take 5 minutes.' : 'Let\'s focus.', 'info');
-                updateTimerDisplay();
-            }
-        }, 1000);
-    }
-
-    window.pauseTimer = () => {
-        clearInterval(timerInterval);
-        timerInterval = null;
-    }
-
-    window.resetTimer = () => {
-        pauseTimer();
-        isBreak = false;
-        timeLeft = 25 * 60;
-        updateTimerDisplay();
-    }
-
-    function updateTimerDisplay() {
-        const mins = Math.floor(timeLeft / 60);
-        const secs = timeLeft % 60;
-        document.getElementById('timer-display').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-
-    // --- STUDY MODE (QUIZ) LOGIC ---
+    // --- QUIZ MODULE ---
     let quizData = [];
     let currentQuestionIndex = 0;
     let quizScore = 0;
-
     window.openQuiz = () => { document.getElementById('quizModal').style.display = 'flex'; resetQuizMenu(); };
     window.closeQuiz = () => { document.getElementById('quizModal').style.display = 'none'; };
-
-    window.resetQuizMenu = () => {
-        document.getElementById('quizLoader').style.display = 'none';
-        document.getElementById('quiz-options').style.display = 'grid';
-        document.getElementById('quiz-question').innerText = "Choose how you want to study:";
-        document.getElementById('quiz-options').innerHTML = `
-            <button class="quiz-btn q-blue" onclick="startQuickQuiz()">Quick Quiz (Tasks)</button>
-            <button class="quiz-btn q-green" onclick="document.getElementById('materialInput').click()">Upload Materials</button>
-        `;
-    };
-
+    window.resetQuizMenu = () => { document.getElementById('quizLoader').style.display = 'none'; document.getElementById('quiz-options').style.display = 'grid'; document.getElementById('quiz-question').innerText = "Choose how you want to study:"; };
     window.startQuickQuiz = async () => {
-        if (globalTasks.length === 0) {
-            document.getElementById('quiz-question').innerText = "No tasks found! Upload a syllabus first.";
-            return;
-        }
+        if (!globalTasks.length) return;
         document.getElementById('quiz-options').style.display = 'none';
         document.getElementById('quizLoader').style.display = 'block';
-
-        try {
-            const recentTask = [...globalTasks].reverse().find(t => t.originalText);
-            const contextText = recentTask ? recentTask.originalText : "";
-            const topics = globalTasks.map(t => `${t.subject}: ${t.title}`).join(", ");
-            
-            const prompt = contextText 
-                ? `Based strictly on this material: ${contextText.substring(0, 10000)}. Create a 3-question multiple-choice quiz. Return ONLY JSON format: [{"question": "...", "options": ["A", "B", "C", "D"], "answer": "..."}]`
-                : `Create a 3-question multiple-choice quiz on these topics: ${topics}. Return ONLY JSON format: [{"question": "...", "options": ["A", "B", "C", "D"], "answer": "..."}]`;
-            
-            await generateAndStartQuiz(prompt);
-        } catch (err) { console.error(err); resetQuizMenu(); }
-    };
-
-    window.handleMaterialUpload = async () => {
-        const fileInput = document.getElementById('materialInput');
-        if (fileInput.files.length === 0) return;
-        document.getElementById('quiz-options').style.display = 'none';
-        document.getElementById('quizLoader').style.display = 'block';
-
-        try {
-            const file = fileInput.files[0];
-            let text = "";
-            if (file.name.endsWith('.pdf')) text = await extractTextFromPDF(file);
-            else if (file.name.endsWith('.docx')) text = await extractTextFromWord(file);
-            else text = await extractTextFromPPTX(file);
-
-            const prompt = `Based on: ${text.substring(0, 8000)}. Create 3 quiz questions. JSON format: [{"question": "...", "options": ["A", "B", "C", "D"], "answer": "..."}]`;
-            await generateAndStartQuiz(prompt);
-        } catch (err) { console.error(err); resetQuizMenu(); }
-    };
-
-    async function generateAndStartQuiz(prompt) {
+        const recentTask = [...globalTasks].reverse().find(t => t.originalText);
+        const prompt = `Create a 3-question MCQ quiz on: ${recentTask ? recentTask.originalText : "general study"}. Return JSON: [{"question": "...", "options": ["A", "B", "C", "D"], "answer": "..."}]`;
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-        });
+        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
         const data = await res.json();
-        const raw = data.candidates[0].content.parts[0].text;
-        quizData = JSON.parse(raw.match(/\[[\s\S]*\]/)[0]);
-        currentQuestionIndex = 0;
-        quizScore = 0;
+        quizData = JSON.parse(data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim());
+        currentQuestionIndex = 0; quizScore = 0;
         document.getElementById('quizLoader').style.display = 'none';
         document.getElementById('quiz-options').style.display = 'grid';
         renderQuizQuestion();
-    }
-
-    window.renderQuizQuestion = () => {
-        if (currentQuestionIndex >= quizData.length) {
-            document.getElementById('quiz-question').innerText = `Finished! Score: ${quizScore}/${quizData.length}`;
-            document.getElementById('quiz-options').innerHTML = `<button class="quiz-btn q-blue" onclick="resetQuizMenu()">Play Again</button>`;
-            return;
-        }
+    };
+    function renderQuizQuestion() {
+        if (currentQuestionIndex >= quizData.length) { document.getElementById('quiz-question').innerText = `Score: ${quizScore}/${quizData.length}`; return; }
         const q = quizData[currentQuestionIndex];
         document.getElementById('quiz-question').innerText = q.question;
         const colors = ['q-red', 'q-blue', 'q-yellow', 'q-green'];
-        document.getElementById('quiz-options').innerHTML = q.options.map((opt, i) =>
-            `<button class="quiz-btn ${colors[i]}" onclick="checkAnswer('${opt.replace(/'/g, "\\'")}')">${opt}</button>`
-        ).join('');
-    };
-
+        document.getElementById('quiz-options').innerHTML = q.options.map((opt, i) => `<button class="quiz-btn ${colors[i]}" onclick="checkAnswer('${opt.replace(/'/g, "\\'")}')">${opt}</button>`).join('');
+    }
     window.checkAnswer = (selected) => {
-        window.checkAnswer = (selected) => {
         const modalContent = document.querySelector('.quiz-content');
-        
-        if (selected === quizData[currentQuestionIndex].answer) { 
-            quizScore++; 
-            modalContent.classList.add('flash-correct'); // Green Flash
-            showToast("Correct! 🔥", "success");
-        } else { 
-            modalContent.classList.add('flash-wrong');   // Red Flash
-            showToast(`Wrong! Answer: ${quizData[currentQuestionIndex].answer}`, "error");
-        }
-
-        setTimeout(() => {
-            modalContent.classList.remove('flash-correct', 'flash-wrong');
-            currentQuestionIndex++;
-            renderQuizQuestion();
-        }, 1200);
-    };
+        if (selected === quizData[currentQuestionIndex].answer) { quizScore++; modalContent.classList.add('flash-correct'); }
+        else { modalContent.classList.add('flash-wrong'); }
+        setTimeout(() => { modalContent.classList.remove('flash-correct', 'flash-wrong'); currentQuestionIndex++; renderQuizQuestion(); }, 1200);
     };
 </script>
 </body>
