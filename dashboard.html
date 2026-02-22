@@ -380,32 +380,33 @@
 
     // --- ANALYTICS & INTELLIGENT PACING ENGINE ---
     function updateAnalytics() {
-        if(!globalTasks.length) return;
-        const now = new Date();
-        const done = globalTasks.filter(t => t.completed).length;
-        const overdue = globalTasks.filter(t => !t.completed && new Date(t.date) < now).length;
-        const pending = globalTasks.filter(t => !t.completed && new Date(t.date) >= now).length;
-        const total = globalTasks.length;
+    if(!globalTasks.length) return;
 
-        setBarHeight('bar-done', (done / total) * 100, done);
-        setBarHeight('bar-overdue', (overdue / total) * 100, overdue);
-        setBarHeight('bar-pending', (pending / total) * 100, pending);
+    const done = globalTasks.filter(t => t.completed).length;
+    // Modified: Pending now counts ALL incomplete tasks
+    const pending = globalTasks.filter(t => !t.completed).length;
 
-        // Adaptive Pacing Logic
-        const pacingDiv = document.getElementById('pacing-suggestion');
-        if(overdue > 2) {
-            pacingDiv.style.display = 'block';
-            pacingDiv.innerHTML = `<div style="background:#FFFBEB; border:1px solid #FCD34B; padding:15px; border-radius:12px; color:#92400E;">
-                <i class="fa-solid fa-brain"></i> <b>Adaptive Suggestion:</b> You have ${overdue} overdue tasks. Prioritize clearing small subtasks now to free up a Deep Work block tomorrow.
-            </div>`;
-        } else { pacingDiv.style.display = 'none'; }
-    }
+    // Keep overdue for the suggestion engine, but merge it into the visual Pending bar
+    const now = new Date();
+    const overdueCount = globalTasks.filter(t => !t.completed && new Date(t.date) < now).length;
+    const total = globalTasks.length;
 
-    function setBarHeight(id, percent, count) {
-        const el = document.getElementById(id);
-        el.style.height = `${Math.max(percent, 5)}%`;
-        el.querySelector('span').innerText = `${count} ${el.id.split('-')[1]}`;
-    }
+    setBarHeight('bar-done', (done / total) * 100, done);
+    // Visual bar now represents all work remaining
+    setBarHeight('bar-pending', (pending / total) * 100, pending);
+
+    // We can hide the overdue bar or set it to 0 to keep the chart clean
+    setBarHeight('bar-overdue', 0, 0);
+
+    // Keep the Intelligent Pacing alert so you still know when tasks are late
+    const pacingDiv = document.getElementById('pacing-suggestion');
+    if(overdueCount > 0) {
+        pacingDiv.style.display = 'block';
+        pacingDiv.innerHTML = `<div style="background:#FFFBEB; border:1px solid #FCD34B; padding:15px; border-radius:12px; color:#92400E;">
+            <i class="fa-solid fa-brain"></i> <b>Adaptive Suggestion:</b> You have ${overdueCount} tasks past their date. We've grouped them in "Pending" for a simpler view, but prioritizing these will reduce your academic stress.
+        </div>`;
+    } else { pacingDiv.style.display = 'none'; }
+}
 
     // --- POMODORO & GAMIFICATION ENGINE ---
     let timerInterval;
