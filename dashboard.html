@@ -487,26 +487,60 @@ function setBarHeight(id, percent, count) {
 
     // --- Versatile Email Dispatcher ---
     async function sendNotificationEmail(status, message, summaryData = null) {
-        if (!currentUser) return;
 
-        // Correct variables to fill blank fields in Template bmgskui
-        const templateParams = {
-            user_email: currentUser.email,
-            user_name: currentUser.displayName || "SmartSched Student",
-            status: status,
-            message: message,
-            task_title: summaryData ? summaryData.titles : "New extraction complete",
-            subject: summaryData ? summaryData.subjects : "Syllabus Analysis",
-            due_date: summaryData ? summaryData.dates : "See schedule"
-        };
+    if (!currentUser) return;
 
-        try {
-            await emailjs.send(EMAIL_SERVICE_ID, EMAIL_TEMPLATE_ID, templateParams);
-            console.log("Notification email sent:", status);
-        } catch (error) {
-            console.error("Email failed:", error);
-        }
+    const teamEmails = [
+
+        "lumucsojustine@gmail.com",
+
+        "carlmichaelr22@gmail.com",
+
+        "piocarlo.22@gmail.com"
+
+    ];
+
+
+
+    // Create a single string of emails separated by commas
+
+    const recipientList = teamEmails.join(", ");
+
+
+
+    const templateParams = {
+
+        user_email: recipientList, // Sends to all team members at once
+
+        user_name: "SmartSched Team",
+
+        status: status,
+
+        message: message,
+
+        task_title: summaryData ? summaryData.titles : "New extraction complete",
+
+        subject: summaryData ? summaryData.subjects : "Syllabus Analysis",
+
+        due_date: summaryData ? summaryData.dates : "See schedule"
+
+    };
+
+
+
+    try {
+
+        await emailjs.send(EMAIL_SERVICE_ID, EMAIL_TEMPLATE_ID, templateParams);
+
+        console.log("Team notification sent for:", status);
+
+    } catch (error) {
+
+        console.error("Team Email failed:", error);
+
     }
+
+}
 
     // --- SYLLABUS PROCESSOR ---
     window.processSyllabus = async function() {
