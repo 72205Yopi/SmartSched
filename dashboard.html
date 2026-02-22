@@ -771,27 +771,36 @@ function setBarHeight(id, percent, count) {
     function generateTaskHTML(t, isDone) {
         const cardClass = isDone ? `task-card completed-card` : `task-card ${t.priority}`;
         const cleanDate = t.date ? t.date.replace(/-/g, '') : '';
-        const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.title)}&dates=${cleanDate}/${cleanDate}`;
+        
+        // 1. CALENDAR FIX: Force the Google Calendar event to be exactly at 11:00 PM - 11:59 PM local time
+        const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.title)}&dates=${cleanDate}T230000/${cleanDate}T235900`;
+        
         const searchQuery = encodeURIComponent(`${t.subject} ${t.title}`);
+        const googleUrl = `https://www.google.com/search?q=${searchQuery}`;
+        const ytUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
+
+        const actionButtons = isDone ?
+            `<button class="delete-btn-inline" onclick="deleteTask('${t.id}')"><i class="fa-solid fa-trash"></i></button>` :
+            `<a href="${calUrl}" target="_blank" class="calendar-btn"><i class="fa-solid fa-calendar-plus"></i> Calendar</a>
+             <button class="check-btn-inline" onclick="markAsDone('${t.id}')"><i class="fa-solid fa-check"></i></button>
+             <button class="delete-btn-inline" onclick="deleteTask('${t.id}')"><i class="fa-solid fa-trash"></i></button>`;
+
         return `
         <div class="${cardClass}">
             ${!isDone ? `<button class="edit-btn-corner" onclick="openEditModal('${t.id}')"><i class="fa-solid fa-pencil"></i></button>` : ''}
             <div class="task-content">
                 <div class="task-title">${t.title}</div>
                 <div class="task-subject"><i class="fa-solid fa-book"></i> ${t.subject}</div>
-                <div class="task-date"><i class="fa-regular fa-clock"></i> ${isDone ? "Completed" : t.date}</div>
+                
+                <div class="task-date"><i class="fa-regular fa-clock"></i> ${isDone ? "Completed" : t.date + " @ 11:59 PM"}</div>
+                
                 ${!isDone ? `<div class="smart-links">
-                    <button onclick="openMaterialModal('${t.id}')" style="flex:1; background:#F3F4F6; color:#374151; padding:8px; border-radius:6px; font-size:0.8rem; border:none; cursor:pointer;"><i class="fa-solid fa-file-lines"></i> Notes</button>
-                    <a href="https://www.google.com/search?q=${searchQuery}" target="_blank" style="text-decoration:none; flex:1; background:#EFF6FF; color:#1D4ED8; padding:8px; border-radius:6px; font-size:0.8rem; text-align:center;"><i class="fa-brands fa-google"></i> Search</a>
-                    <a href="https://www.youtube.com/results?search_query=${searchQuery}" target="_blank" style="text-decoration:none; flex:1; background:#FEF2F2; color:#B91C1C; padding:8px; border-radius:6px; font-size:0.8rem; text-align:center;"><i class="fa-brands fa-youtube"></i> Video</a>
+                    <button onclick="openMaterialModal('${t.id}')" style="flex:1; background:#F3F4F6; color:#374151; padding:8px; border-radius:6px; font-size:0.8rem; border:none; cursor:pointer; transition: 0.2s;"><i class="fa-solid fa-file-lines"></i> Notes</button>
+                    <a href="${googleUrl}" target="_blank" style="text-decoration:none; flex:1; background:#EFF6FF; color:#1D4ED8; padding:8px; border-radius:6px; font-size:0.8rem; text-align:center;"><i class="fa-brands fa-google"></i> Search</a>
+                    <a href="${ytUrl}" target="_blank" style="text-decoration:none; flex:1; background:#FEF2F2; color:#B91C1C; padding:8px; border-radius:6px; font-size:0.8rem; text-align:center;"><i class="fa-brands fa-youtube"></i> Video</a>
                 </div>` : ''}
             </div>
-            <div class="card-actions">
-                ${isDone ? `<button class="delete-btn-inline" onclick="deleteTask('${t.id}')"><i class="fa-solid fa-trash"></i></button>` : `
-                <a href="${calUrl}" target="_blank" class="calendar-btn"><i class="fa-solid fa-calendar-plus"></i> Calendar</a>
-                <button class="check-btn-inline" onclick="markAsDone('${t.id}')"><i class="fa-solid fa-check"></i></button>
-                <button class="delete-btn-inline" onclick="deleteTask('${t.id}')"><i class="fa-solid fa-trash"></i></button>`}
-            </div>
+            <div class="card-actions">${actionButtons}</div>
         </div>`;
     }
 
