@@ -13,7 +13,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
     <style>
@@ -441,30 +440,28 @@
         document.getElementById('timer-display').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 
-    async function sendNotificationEmail(status, message) {
-    if (!currentUser) {
-        console.error("Email blocked: No user logged in.");
-        return;
+    // --- Versatile Email Dispatcher ---
+    async function sendNotificationEmail(status, message, summaryData = null) {
+        if (!currentUser) return;
+
+        // Correct variables to fill blank fields in Template bmgskui
+        const templateParams = {
+            user_email: currentUser.email,
+            user_name: currentUser.displayName || "SmartSched Student",
+            status: status,
+            message: message,
+            task_title: summaryData ? summaryData.titles : "New extraction complete",
+            subject: summaryData ? summaryData.subjects : "Syllabus Analysis",
+            due_date: summaryData ? summaryData.dates : "See schedule"
+        };
+
+        try {
+            await emailjs.send(EMAIL_SERVICE_ID, EMAIL_TEMPLATE_ID, templateParams);
+            console.log("Notification email sent:", status);
+        } catch (error) {
+            console.error("Email failed:", error);
+        }
     }
-
-    const templateParams = {
-        user_email: currentUser.email,
-        user_name: currentUser.displayName || "SmartSched Student",
-        status: status,
-        message: message
-    };
-
-    try {
-        await emailjs.send("service_vh9g29a", "template_bmgskui", templateParams);
-        console.log("✅ Email successfully sent to EmailJS!");
-
-        // Visual confirmation for your presentation
-        showToast("Notification email sent! 📧");
-    } catch (error) {
-        console.error("❌ EmailJS Error:", error);
-        // This will tell you exactly why it failed (e.g., "Invalid Template ID")
-    }
-}
 
     // --- SYLLABUS PROCESSOR ---
     window.processSyllabus = async function() {
@@ -484,11 +481,17 @@
             const tasks = await analyzeWithGemini(text, GEMINI_API_KEY);
             await saveTasksToFirestore(tasks, text);
 
-            // --- TRIGGER REMINDER ON UPLOAD ---
-            const taskCount = tasks.length;
-            sendNotificationEmail(
-                "New Tasks Extracted! 📅",
-                `AI has successfully parsed your syllabus. ${taskCount} new tasks have been added to your My Schedule tab.`
+            // --- SUMMARY OF ALL EXTRACTED TASKS ---
+            const summary = {
+                titles: tasks.map(t => t.title).join(", "),
+                subjects: [...new Set(tasks.map(t => t.subject))].join(", "),
+                dates: tasks.map(t => t.date).join(" | ")
+            };
+
+            await sendNotificationEmail(
+                "Syllabus Tasks Extracted! 📅",
+                `AI successfully parsed your file. ${tasks.length} new tasks are ready for study.`,
+                summary
             );
 
             document.getElementById('aiLoader').style.display = 'none';
@@ -605,14 +608,12 @@
 
     window.saveEditTask = async () => {
         if(!editingTaskId) return;
-
         const updatedData = {
             title: document.getElementById('editTitle').value,
             subject: document.getElementById('editSubject').value,
             date: document.getElementById('editDate').value,
             priority: document.getElementById('editPriority').value
         };
-
         try {
             const taskRef = doc(db, "tasks", editingTaskId);
             await updateDoc(taskRef, updatedData);
@@ -742,7 +743,6 @@
             document.getElementById('quiz-question').innerText = "No tasks found! Upload a syllabus first.";
             return;
         }
-
         document.getElementById('quiz-options').style.display = 'none';
         document.getElementById('quizLoader').style.display = 'block';
 
@@ -751,8 +751,8 @@
         const topics = globalTasks.map(t => `${t.subject}: ${t.title}`).join(", ");
 
         lastUsedPrompt = contextText
-            ? `Based strictly on this material: ${contextText.substring(0, 8000)}. Create a ${requestedQuestionCount} question multiple-choice quiz. Return ONLY JSON format: [{"question": "...", "options": ["A", "B", "C", "D"], "answer": "..."}]`
-            : `Create a ${requestedQuestionCount} question multiple-choice quiz based on these study topics: ${topics}. Return ONLY JSON format: [{"question": "...", "options": ["A", "B", "C", "D"], "answer": "..."}]`;
+            ? `Based strictly on this material: ${contextText.substring(0, 8000)}. Create a ${requestedQuestionCount} question multiple-choice quiz. Return ONLY JSON format: [{"question": \"...\", \"options\": [\"A\", \"B\", \"C\", \"D\"], \"answer\": \"...\"}]`
+            : `Create a ${requestedQuestionCount} question multiple-choice quiz based on these study topics: ${topics}. Return ONLY JSON format: [{"question": \"...\", \"options\": [\"A\", \"B\", \"C\", \"D\"], \"answer\": \"...\"}]`;
 
         await generateAndStartQuiz(lastUsedPrompt);
     };
@@ -760,7 +760,6 @@
     window.handleMaterialUpload = async () => {
         const fileInput = document.getElementById('materialInput');
         if (fileInput.files.length === 0) return;
-
         document.getElementById('quiz-options').style.display = 'none';
         document.getElementById('quizLoader').style.display = 'block';
 
@@ -771,12 +770,12 @@
             else if (file.name.endsWith('.docx')) text = await extractTextFromWord(file);
             else text = await extractTextFromPPTX(file);
 
-            lastUsedPrompt = `Based on: ${text.substring(0, 8000)}. Create a ${requestedQuestionCount} question multiple-choice quiz. Return ONLY JSON format: [{"question": "...", "options": ["A", "B", "C", "D"], "answer": "..."}]`;
+            lastUsedPrompt = `Based on: ${text.substring(0, 8000)}. Create a ${requestedQuestionCount} question multiple-choice quiz. Return ONLY JSON format: [{"question": \"...\", \"options\": [\"A\", \"B\", \"C\", \"D\"], \"answer\": \"...\"}]`;
 
-            // --- TRIGGER REMINDER ON MATERIAL UPLOAD ---
-            sendNotificationEmail(
+            await sendNotificationEmail(
                 "Study Session Ready! 🚀",
-                "A new quiz has been generated from your uploaded materials. Start your focus session now!"
+                "A new quiz has been generated from your uploaded materials. Start your focus session now!",
+                { titles: file.name, subjects: "User Material", dates: "Ready Now" }
             );
 
             await generateAndStartQuiz(lastUsedPrompt);
@@ -788,36 +787,27 @@
 
     async function generateAndStartQuiz(prompt) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-
         try {
             const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
-
             const data = await res.json();
-
-            if (!data.candidates || data.candidates.length === 0) {
-                throw new Error("AI response was blocked or the model is unavailable.");
-            }
+            if (!data.candidates || data.candidates.length === 0) { throw new Error("AI response unavailable."); }
 
             let raw = data.candidates[0].content.parts[0].text;
             const cleanedJson = raw.replace(/```json|```/g, '').trim();
             const jsonMatch = cleanedJson.match(/\[[\s\S]*\]/);
-
-            if (!jsonMatch) throw new Error("Invalid JSON format from AI");
+            if (!jsonMatch) throw new Error("Invalid JSON from AI");
 
             quizData = JSON.parse(jsonMatch[0]);
-
-            currentQuestionIndex = 0;
-            quizScore = 0;
+            currentQuestionIndex = 0; quizScore = 0;
             document.getElementById('quizLoader').style.display = 'none';
             document.getElementById('quiz-options').style.display = 'grid';
             renderQuizQuestion();
-
         } catch (err) {
-            console.error("Quiz Error Details:", err);
+            console.error("Quiz Error:", err);
             document.getElementById('quizLoader').innerHTML = `
                 <div style="color:white; padding:20px;">
                     <p>⚠️ AI failed to generate the quiz.</p>
@@ -852,7 +842,6 @@
             modalContent.classList.add('flash-wrong');
             showToast(`Wrong! Answer: ${quizData[currentQuestionIndex].answer}`, "error");
         }
-
         setTimeout(() => {
             modalContent.classList.remove('flash-correct', 'flash-wrong');
             currentQuestionIndex++;
