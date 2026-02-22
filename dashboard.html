@@ -181,6 +181,18 @@
             40%, 80% { transform: translateX(10px); }
             50% { background-color: #E21B3C; }
         }
+        /* --- OVERDUE PULSE ANIMATION --- */
+@keyframes pulseRed {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); transform: scale(1); }
+    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); transform: scale(1.02); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); transform: scale(1); }
+}
+
+.pulse-active {
+    animation: pulseRed 2s infinite;
+    border: 2px solid #ff0000;
+    z-index: 5;
+}
     </style>
 </head>
 <body>
@@ -382,45 +394,62 @@
 function updateAnalytics() {
     if(!globalTasks || globalTasks.length === 0) return;
 
+    const now = new Date();
     const total = globalTasks.length;
     const done = globalTasks.filter(t => t.completed).length;
-    const pending = globalTasks.filter(t => !t.completed).length; // New simplified logic
 
-    // Calculate percentages for the CSS heights
+    // 1. Pending: Displays ALL incomplete tasks (Pending + Overdue)
+    const pendingTotal = globalTasks.filter(t => !t.completed).length;
+
+    // 2. Overdue: Only displays tasks that are specifically late
+    const overdueOnly = globalTasks.filter(t => !t.completed && new Date(t.date) < now).length;
+
+    // Calculate Percentages
     const donePercent = (done / total) * 100;
-    const pendingPercent = (pending / total) * 100;
+    const pendingPercent = (pendingTotal / total) * 100;
+    const overduePercent = (overdueOnly / total) * 100;
 
-    // Update the visual bars
+    // Update Visual Bars
     setBarHeight('bar-done', donePercent, done);
-    setBarHeight('bar-pending', pendingPercent, pending);
+    setBarHeight('bar-pending', pendingPercent, pendingTotal);
+    setBarHeight('bar-overdue', overduePercent, overdueOnly);
 
-    // We set Overdue height to 0 for the simplified view,
-    // but keep counting it for the "Adaptive Suggestion" text
-    const now = new Date();
-    const overdueCount = globalTasks.filter(t => !t.completed && new Date(t.date) < now).length;
-    setBarHeight('bar-overdue', 0, 0);
-
-    // Update the text boxes below the bars
-    document.getElementById('upcoming-count').innerText = pending;
+    // Update Counter Cards
+    document.getElementById('upcoming-count').innerText = pendingTotal;
     document.getElementById('urgent-count').innerText = globalTasks.filter(t => !t.completed && t.priority === 'Urgent').length;
 
-    // Trigger the Adaptive Suggestion
+    // Adaptive Suggestion Text
     const pacingDiv = document.getElementById('pacing-suggestion');
-    if(overdueCount > 0) {
+    if(overdueOnly > 0) {
         pacingDiv.style.display = 'block';
         pacingDiv.innerHTML = `<div style="background:#FFFBEB; border:1px solid #FCD34B; padding:15px; border-radius:12px; color:#92400E;">
-            <i class="fa-solid fa-brain"></i> <b>Adaptive Suggestion:</b> You have ${overdueCount} overdue tasks. Prioritize these to clear your schedule!
+            <i class="fa-solid fa-brain"></i> <b>Adaptive Suggestion:</b> You have ${overdueOnly} overdue tasks. They are highlighted in red, but also included in your total "Pending" count.
         </div>`;
     } else { pacingDiv.style.display = 'none'; }
 }
 
-// Helper to ensure the CSS actually changes
+// --- ADD THIS FUNCTION HERE ---
 function setBarHeight(id, percent, count) {
     const el = document.getElementById(id);
     if (!el) return;
-    // Ensure a minimum height of 5% so the bar is always visible
+
+    // Safety: Minimum 5% height so the label is always visible
     el.style.height = `${Math.max(percent, 5)}%`;
-    el.querySelector('span').innerText = `${count} ${id.split('-')[1]}`;
+
+    // Update the label inside the bar
+    const label = el.querySelector('span');
+    if (label) {
+        label.innerText = `${count} ${id.split('-')[1]}`;
+    }
+
+    // --- TRIGGER PULSE FOR OVERDUE BAR ---
+    if (id === 'bar-overdue') {
+        if (count > 0) {
+            el.classList.add('pulse-active');
+        } else {
+            el.classList.remove('pulse-active');
+        }
+    }
 }
 
     // --- POMODORO & GAMIFICATION ENGINE ---
