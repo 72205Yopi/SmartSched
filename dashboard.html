@@ -379,33 +379,48 @@
     }
 
     // --- ANALYTICS & INTELLIGENT PACING ENGINE ---
-    function updateAnalytics() {
-    if(!globalTasks.length) return;
+function updateAnalytics() {
+    if(!globalTasks || globalTasks.length === 0) return;
 
+    const total = globalTasks.length;
     const done = globalTasks.filter(t => t.completed).length;
-    // Modified: Pending now counts ALL incomplete tasks
-    const pending = globalTasks.filter(t => !t.completed).length;
+    const pending = globalTasks.filter(t => !t.completed).length; // New simplified logic
 
-    // Keep overdue for the suggestion engine, but merge it into the visual Pending bar
+    // Calculate percentages for the CSS heights
+    const donePercent = (done / total) * 100;
+    const pendingPercent = (pending / total) * 100;
+
+    // Update the visual bars
+    setBarHeight('bar-done', donePercent, done);
+    setBarHeight('bar-pending', pendingPercent, pending);
+
+    // We set Overdue height to 0 for the simplified view,
+    // but keep counting it for the "Adaptive Suggestion" text
     const now = new Date();
     const overdueCount = globalTasks.filter(t => !t.completed && new Date(t.date) < now).length;
-    const total = globalTasks.length;
-
-    setBarHeight('bar-done', (done / total) * 100, done);
-    // Visual bar now represents all work remaining
-    setBarHeight('bar-pending', (pending / total) * 100, pending);
-
-    // We can hide the overdue bar or set it to 0 to keep the chart clean
     setBarHeight('bar-overdue', 0, 0);
 
-    // Keep the Intelligent Pacing alert so you still know when tasks are late
+    // Update the text boxes below the bars
+    document.getElementById('upcoming-count').innerText = pending;
+    document.getElementById('urgent-count').innerText = globalTasks.filter(t => !t.completed && t.priority === 'Urgent').length;
+
+    // Trigger the Adaptive Suggestion
     const pacingDiv = document.getElementById('pacing-suggestion');
     if(overdueCount > 0) {
         pacingDiv.style.display = 'block';
         pacingDiv.innerHTML = `<div style="background:#FFFBEB; border:1px solid #FCD34B; padding:15px; border-radius:12px; color:#92400E;">
-            <i class="fa-solid fa-brain"></i> <b>Adaptive Suggestion:</b> You have ${overdueCount} tasks past their date. We've grouped them in "Pending" for a simpler view, but prioritizing these will reduce your academic stress.
+            <i class="fa-solid fa-brain"></i> <b>Adaptive Suggestion:</b> You have ${overdueCount} overdue tasks. Prioritize these to clear your schedule!
         </div>`;
     } else { pacingDiv.style.display = 'none'; }
+}
+
+// Helper to ensure the CSS actually changes
+function setBarHeight(id, percent, count) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    // Ensure a minimum height of 5% so the bar is always visible
+    el.style.height = `${Math.max(percent, 5)}%`;
+    el.querySelector('span').innerText = `${count} ${id.split('-')[1]}`;
 }
 
     // --- POMODORO & GAMIFICATION ENGINE ---
@@ -601,11 +616,21 @@
         updateAnalytics();
     }
 
-    window.markAsDone = async function(taskId) {
+   window.markAsDone = async function(taskId) {
+    try {
         await updateDoc(doc(db, "tasks", taskId), { completed: true });
-        loadTasksFromFirestore();
+
+        // Refresh the local data
+        await loadTasksFromFirestore();
+
+        // FORCE the dashboard to recalculate
+        updateAnalytics();
+
         showToast("Task completed ✅");
-    };
+    } catch (error) {
+        console.error("Update failed:", error);
+    }
+};
 
     window.saveEditTask = async () => {
         if(!editingTaskId) return;
