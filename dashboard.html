@@ -873,9 +873,8 @@ function setBarHeight(id, percent, count) {
         const topics = globalTasks.map(t => `${t.subject}: ${t.title}`).join(", ");
 
         lastUsedPrompt = contextText
-            ? `Based strictly on this material: ${contextText.substring(0, 8000)}. Create a ${requestedQuestionCount} question multiple-choice quiz. Return ONLY JSON format: [{"question": \"...\", \"options\": [\"A\", \"B\", \"C\", \"D\"], \"answer\": \"...\"}]`
-            : `Create a ${requestedQuestionCount} question multiple-choice quiz based on these study topics: ${topics}. Return ONLY JSON format: [{"question": \"...\", \"options\": [\"A\", \"B\", \"C\", \"D\"], \"answer\": \"...\"}]`;
-
+            ? `Based strictly on this material: ${contextText.substring(0, 8000)}. Create a ${requestedQuestionCount} question multiple-choice quiz. Return ONLY JSON format: [{"question": "...", "options": ["Option 1", "Option 2", "Option 3", "Option 4"], "answer": "Exact text of the correct option"}]`
+            : `Create a ${requestedQuestionCount} question multiple-choice quiz based on these study topics: ${topics}. Return ONLY JSON format: [{"question": "...", "options": ["Option 1", "Option 2", "Option 3", "Option 4"], "answer": "Exact text of the correct option"}]`;
         await generateAndStartQuiz(lastUsedPrompt);
     };
 
@@ -892,7 +891,7 @@ function setBarHeight(id, percent, count) {
             else if (file.name.endsWith('.docx')) text = await extractTextFromWord(file);
             else text = await extractTextFromPPTX(file);
 
-            lastUsedPrompt = `Based on: ${text.substring(0, 8000)}. Create a ${requestedQuestionCount} question multiple-choice quiz. Return ONLY JSON format: [{"question": \"...\", \"options\": [\"A\", \"B\", \"C\", \"D\"], \"answer\": \"...\"}]`;
+           lastUsedPrompt = `Based on: ${text.substring(0, 8000)}. Create a ${requestedQuestionCount} question multiple-choice quiz. Return ONLY JSON format: [{"question": "...", "options": ["Option 1", "Option 2", "Option 3", "Option 4"], "answer": "Exact text of the correct option"}]`;
 
             await sendNotificationEmail(
                 "Study Session Ready! 🚀",
