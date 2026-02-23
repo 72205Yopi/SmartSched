@@ -284,8 +284,6 @@
         <div class="quiz-header">Study Mode 🚀</div>
         <div id="quiz-question" class="quiz-question">Choose how you want to study:</div>
         <div id="quiz-options" class="quiz-grid">
-            <button class="quiz-btn q-blue" onclick="startQuickQuiz()">Quick Quiz (From Tasks)</button>
-            <button class="quiz-btn q-green" onclick="document.getElementById('materialInput').click()">Upload Materials</button>
         </div>
         <input type="file" id="materialInput" accept=".pdf, .docx, .pptx" style="display: none;" onchange="handleMaterialUpload()">
         <div class="loader-container" id="quizLoader" style="margin-top: 20px;">
@@ -428,27 +426,15 @@ function updateAnalytics() {
     } else { pacingDiv.style.display = 'none'; }
 }
 
-// --- ADD THIS FUNCTION HERE ---
 function setBarHeight(id, percent, count) {
     const el = document.getElementById(id);
     if (!el) return;
-
-    // Safety: Minimum 5% height so the label is always visible
     el.style.height = `${Math.max(percent, 5)}%`;
-
-    // Update the label inside the bar
     const label = el.querySelector('span');
-    if (label) {
-        label.innerText = `${count} ${id.split('-')[1]}`;
-    }
-
-    // --- TRIGGER PULSE FOR OVERDUE BAR ---
+    if (label) { label.innerText = `${count} ${id.split('-')[1]}`; }
     if (id === 'bar-overdue') {
-        if (count > 0) {
-            el.classList.add('pulse-active');
-        } else {
-            el.classList.remove('pulse-active');
-        }
+        if (count > 0) el.classList.add('pulse-active');
+        else el.classList.remove('pulse-active');
     }
 }
 
@@ -466,8 +452,6 @@ function setBarHeight(id, percent, count) {
             timerInterval = null;
             focusStreak++;
             document.getElementById('streak-counter').innerText = `Streak: ${focusStreak} 🔥`;
-
-            // Streak Reward
             if(focusStreak >= 3) {
                 document.body.classList.add('streak-mode');
                 Swal.fire('Elite Focus! 🔥', '3 sessions complete. You’ve unlocked the elite UI theme.', 'success');
@@ -485,64 +469,22 @@ function setBarHeight(id, percent, count) {
         document.getElementById('timer-display').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 
-    // --- Versatile Email Dispatcher ---
     async function sendNotificationEmail(status, message, summaryData = null) {
-
-    if (!currentUser) return;
-
-    const teamEmails = [
-
-        "lumucsojustine@gmail.com",
-
-        "carlmichaelr22@gmail.com",
-
-        "piocarlo.22@gmail.com"
-
-    ];
-
-
-
-    // Create a single string of emails separated by commas
-
-    const recipientList = teamEmails.join(", ");
-
-
-
-    const templateParams = {
-
-        user_email: recipientList, // Sends to all team members at once
-
-        user_name: "SmartSched Team",
-
-        status: status,
-
-        message: message,
-
-        task_title: summaryData ? summaryData.titles : "New extraction complete",
-
-        subject: summaryData ? summaryData.subjects : "Syllabus Analysis",
-
-        due_date: summaryData ? summaryData.dates : "See schedule"
-
-    };
-
-
-
-    try {
-
-        await emailjs.send(EMAIL_SERVICE_ID, EMAIL_TEMPLATE_ID, templateParams);
-
-        console.log("Team notification sent for:", status);
-
-    } catch (error) {
-
-        console.error("Team Email failed:", error);
-
+        if (!currentUser) return;
+        const teamEmails = ["lumucsojustine@gmail.com", "carlmichaelr22@gmail.com", "piocarlo.22@gmail.com"];
+        const templateParams = {
+            user_email: teamEmails.join(", "),
+            user_name: "SmartSched Team",
+            status: status,
+            message: message,
+            task_title: summaryData ? summaryData.titles : "New extraction complete",
+            subject: summaryData ? summaryData.subjects : "Syllabus Analysis",
+            due_date: summaryData ? summaryData.dates : "See schedule"
+        };
+        try { await emailjs.send(EMAIL_SERVICE_ID, EMAIL_TEMPLATE_ID, templateParams); }
+        catch (error) { console.error("Team Email failed:", error); }
     }
 
-}
-
-    // --- SYLLABUS PROCESSOR ---
     window.processSyllabus = async function() {
         if (!selectedFile) return;
         document.querySelector('.upload-zone').style.display = 'none';
@@ -560,25 +502,18 @@ function setBarHeight(id, percent, count) {
             const tasks = await analyzeWithGemini(text, GEMINI_API_KEY);
             await saveTasksToFirestore(tasks, text);
 
-            // --- SUMMARY OF ALL EXTRACTED TASKS ---
             const summary = {
                 titles: tasks.map(t => t.title).join(", "),
                 subjects: [...new Set(tasks.map(t => t.subject))].join(", "),
                 dates: tasks.map(t => t.date).join(" | ")
             };
 
-            await sendNotificationEmail(
-                "Syllabus Tasks Extracted! 📅",
-                `AI successfully parsed your file. ${tasks.length} new tasks are ready for study.`,
-                summary
-            );
-
+            await sendNotificationEmail("Syllabus Tasks Extracted! 📅", `AI successfully parsed your file.`, summary);
             document.getElementById('aiLoader').style.display = 'none';
             switchTab('schedule');
             resetUpload();
             showToast(`Saved ${tasks.length} tasks!`);
         } catch (error) {
-            console.error(error);
             showToast(error.message, "error");
             document.getElementById('aiLoader').style.display = 'none';
             resetUpload();
@@ -620,7 +555,6 @@ function setBarHeight(id, percent, count) {
     async function analyzeWithGemini(text, apiKey) {
         const prompt = `Analyze this syllabus text. Extract assignments/exams. Return JSON: [{"title": "Task", "subject": "Course", "date": "YYYY-MM-DD", "priority": "Urgent/Medium/Normal", "subtasks": ["Step 1"], "estimated_time": "2 hours"}] Text: ${text.substring(0, 10000)}`;
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-
         try {
             const res = await fetch(url, {
                 method: 'POST',
@@ -628,7 +562,6 @@ function setBarHeight(id, percent, count) {
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
             const data = await res.json();
-            if (!res.ok || !data.candidates) { throw new Error(data.error?.message || "Google rejected the request."); }
             return JSON.parse(data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim());
         } catch (error) { throw error; }
     }
@@ -636,11 +569,7 @@ function setBarHeight(id, percent, count) {
     async function saveTasksToFirestore(tasks, rawText = "") {
         if(!currentUser) return;
         const promises = tasks.map(t => addDoc(collection(db, "tasks"), {
-            ...t,
-            completed: false,
-            userId: currentUser.uid,
-            originalText: rawText,
-            createdAt: new Date()
+            ...t, completed: false, userId: currentUser.uid, originalText: rawText, createdAt: new Date()
         }));
         await Promise.all(promises);
         await loadTasksFromFirestore();
@@ -660,110 +589,62 @@ function setBarHeight(id, percent, count) {
         const completedList = document.getElementById('completedTaskList');
         const active = tasks.filter(t => !t.completed);
         const completed = tasks.filter(t => t.completed);
-
-        document.getElementById('upcoming-count').innerText = active.length;
-        document.getElementById('urgent-count').innerText = active.filter(t => t.priority === 'Urgent').length;
-
-        if (active.length === 0) {
-            activeList.innerHTML = `
-            <div style="grid-column: 1/-1; text-align: center; color: #9CA3AF; padding: 60px; background: white; border-radius: 16px; border: 2px dashed #E5E7EB;">
-                <i class="fa-solid fa-mug-hot" style="font-size: 3rem; margin-bottom: 20px; color: #E0E7FF;"></i>
-                <h3 style="color: #374151; margin-bottom: 8px;">All caught up!</h3>
-                <p style="font-size: 0.95rem;">You have no active tasks. Upload a syllabus to start.</p>
-            </div>`;
-        } else {
-            activeList.innerHTML = active.map(t => generateTaskHTML(t, false)).join('');
-        }
-
-        completedList.innerHTML = completed.length === 0 ? `<div style="color:#9CA3AF; padding: 20px;">No completed tasks yet.</div>` : completed.map(t => generateTaskHTML(t, true)).join('');
+        activeList.innerHTML = active.length === 0 ? "No active tasks." : active.map(t => generateTaskHTML(t, false)).join('');
+        completedList.innerHTML = completed.length === 0 ? "No completed tasks." : completed.map(t => generateTaskHTML(t, true)).join('');
         updateAnalytics();
     }
 
-   window.markAsDone = async function(taskId) {
-    try {
+    window.markAsDone = async function(taskId) {
         await updateDoc(doc(db, "tasks", taskId), { completed: true });
-
-        // Refresh the local data
         await loadTasksFromFirestore();
-
-        // FORCE the dashboard to recalculate
-        updateAnalytics();
-
         showToast("Task completed ✅");
-    } catch (error) {
-        console.error("Update failed:", error);
-    }
-};
-    // --- EDIT TASK MODAL LOGIC ---
+    };
+
     window.openEditModal = (taskId) => {
-        // 1. Find the specific task the user clicked
         const task = globalTasks.find(t => t.id === taskId);
         if(!task) return;
-        
-        // 2. Lock in the ID so we know which one to save later
         editingTaskId = taskId;
-        
-        // 3. Fill the popup with the current task details
         document.getElementById('editTitle').value = task.title || "";
         document.getElementById('editSubject').value = task.subject || "";
         document.getElementById('editDate').value = task.date || "";
         document.getElementById('editPriority').value = task.priority || "Normal";
-        
-        // 4. Show the modal!
         document.getElementById('editModal').style.display = 'flex';
     };
 
-    window.closeEditModal = () => { 
-        document.getElementById('editModal').style.display = 'none'; 
-        editingTaskId = null; 
-    };
-
+    window.closeEditModal = () => { document.getElementById('editModal').style.display = 'none'; editingTaskId = null; };
 
     window.saveEditTask = async () => {
-        if(!editingTaskId) return;
         const updatedData = {
             title: document.getElementById('editTitle').value,
             subject: document.getElementById('editSubject').value,
             date: document.getElementById('editDate').value,
             priority: document.getElementById('editPriority').value
         };
-        try {
-            const taskRef = doc(db, "tasks", editingTaskId);
-            await updateDoc(taskRef, updatedData);
-            closeEditModal();
-            loadTasksFromFirestore();
-            showToast("Task updated successfully! ✨");
-        } catch (error) {
-            console.error("Edit Failed:", error);
-            showToast("Could not save changes.", "error");
-        }
+        await updateDoc(doc(db, "tasks", editingTaskId), updatedData);
+        closeEditModal();
+        loadTasksFromFirestore();
+        showToast("Task updated! ✨");
     };
 
     window.deleteTask = async function(taskId) {
-        const result = await Swal.fire({ title: 'Delete Task?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#EF4444' });
+        const result = await Swal.fire({ title: 'Delete Task?', icon: 'warning', showCancelButton: true });
         if (result.isConfirmed) { await deleteDoc(doc(db, "tasks", taskId)); loadTasksFromFirestore(); }
     };
 
-    // --- MATERIAL MODAL ENGINE ---
     window.openMaterialModal = async (taskId) => {
         const task = globalTasks.find(t => t.id === taskId);
         if (!task) return;
         const contentDiv = document.getElementById('materialContent');
         document.getElementById('materialModal').style.display = 'flex';
         if (task.cleanNotes) { contentDiv.innerHTML = task.cleanNotes; return; }
-        if (task.originalText && task.originalText.trim() !== "") {
-            contentDiv.innerHTML = `<div style="text-align:center; padding: 40px;"><div class="spinner" style="margin: 0 auto 15px; border-top-color: #4F46E5;"></div><h3 style="color: #4F46E5;">✨ AI is structuring your notes...</h3></div>`;
-            try {
-                const prompt = `You are a study assistant. Convert this raw text into clean HTML study notes (h3 for titles, ul/li for lists). Output pure HTML. Text: ${task.originalText.substring(0, 8000)}`;
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-                const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
-                const data = await res.json();
-                let cleanHTML = data.candidates[0].content.parts[0].text.replace(/```html|```/g, '').trim();
-                await updateDoc(doc(db, "tasks", taskId), { cleanNotes: cleanHTML });
-                task.cleanNotes = cleanHTML;
-                contentDiv.innerHTML = cleanHTML;
-            } catch (err) { contentDiv.innerHTML = `<div style="white-space: pre-wrap;">${task.originalText}</div>`; }
-        } else { contentDiv.innerHTML = `<h3>No material found.</h3>`; }
+        contentDiv.innerHTML = "Processing notes...";
+        const prompt = `Convert this text into HTML study notes. Text: ${task.originalText?.substring(0, 5000)}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
+        const data = await res.json();
+        let cleanHTML = data.candidates[0].content.parts[0].text.replace(/```html|```/g, '').trim();
+        await updateDoc(doc(db, "tasks", taskId), { cleanNotes: cleanHTML });
+        contentDiv.innerHTML = cleanHTML;
     };
 
     window.closeMaterialModal = () => document.getElementById('materialModal').style.display = 'none';
@@ -771,172 +652,98 @@ function setBarHeight(id, percent, count) {
     function generateTaskHTML(t, isDone) {
         const cardClass = isDone ? `task-card completed-card` : `task-card ${t.priority}`;
         const cleanDate = t.date ? t.date.replace(/-/g, '') : '';
-        
-        // 1. CALENDAR FIX: Force the Google Calendar event to be exactly at 11:00 PM - 11:59 PM local time
         const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(t.title)}&dates=${cleanDate}T230000/${cleanDate}T235900`;
-        
         const searchQuery = encodeURIComponent(`${t.subject} ${t.title}`);
-        const googleUrl = `https://www.google.com/search?q=${searchQuery}`;
-        const ytUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
-
-        const actionButtons = isDone ?
-            `<button class="delete-btn-inline" onclick="deleteTask('${t.id}')"><i class="fa-solid fa-trash"></i></button>` :
-            `<a href="${calUrl}" target="_blank" class="calendar-btn"><i class="fa-solid fa-calendar-plus"></i> Calendar</a>
-             <button class="check-btn-inline" onclick="markAsDone('${t.id}')"><i class="fa-solid fa-check"></i></button>
-             <button class="delete-btn-inline" onclick="deleteTask('${t.id}')"><i class="fa-solid fa-trash"></i></button>`;
-
         return `
         <div class="${cardClass}">
             ${!isDone ? `<button class="edit-btn-corner" onclick="openEditModal('${t.id}')"><i class="fa-solid fa-pencil"></i></button>` : ''}
             <div class="task-content">
                 <div class="task-title">${t.title}</div>
                 <div class="task-subject"><i class="fa-solid fa-book"></i> ${t.subject}</div>
-                
-                <div class="task-date"><i class="fa-regular fa-clock"></i> ${isDone ? "Completed" : t.date + " @ 11:59 PM"}</div>
-                
-                ${!isDone ? `<div class="smart-links">
-                    <button onclick="openMaterialModal('${t.id}')" style="flex:1; background:#F3F4F6; color:#374151; padding:8px; border-radius:6px; font-size:0.8rem; border:none; cursor:pointer; transition: 0.2s;"><i class="fa-solid fa-file-lines"></i> Notes</button>
-                    <a href="${googleUrl}" target="_blank" style="text-decoration:none; flex:1; background:#EFF6FF; color:#1D4ED8; padding:8px; border-radius:6px; font-size:0.8rem; text-align:center;"><i class="fa-brands fa-google"></i> Search</a>
-                    <a href="${ytUrl}" target="_blank" style="text-decoration:none; flex:1; background:#FEF2F2; color:#B91C1C; padding:8px; border-radius:6px; font-size:0.8rem; text-align:center;"><i class="fa-brands fa-youtube"></i> Video</a>
+                <div class="task-date"><i class="fa-regular fa-clock"></i> ${isDone ? "Completed" : t.date}</div>
+                ${!isDone ? `
+                <div class="smart-links">
+                    <button onclick="openMaterialModal('${t.id}')">Notes</button>
+                    <a href="https://google.com/search?q=${searchQuery}" target="_blank">Search</a>
                 </div>` : ''}
             </div>
-            <div class="card-actions">${actionButtons}</div>
+            <div class="card-actions">
+                ${isDone ? `<button onclick="deleteTask('${t.id}')">Delete</button>` : `<a href="${calUrl}" target="_blank" class="calendar-btn">Calendar</a><button class="check-btn-inline" onclick="markAsDone('${t.id}')">Done</button>`}
+            </div>
         </div>`;
     }
 
-    function resetUpload() {
-        document.querySelector('.upload-zone').style.display = 'block';
-        document.getElementById('processBtn').style.display = 'none';
-    }
-
-    function showToast(message, type = "success") {
-        const toast = document.getElementById("toast");
-        toast.textContent = message;
-        toast.className = `toast show`;
-        setTimeout(() => toast.classList.remove("show"), 3000);
-    }
-
+    function resetUpload() { document.querySelector('.upload-zone').style.display = 'block'; document.getElementById('processBtn').style.display = 'none'; }
+    function showToast(message) { const toast = document.getElementById("toast"); toast.textContent = message; toast.className = `toast show`; setTimeout(() => toast.classList.remove("show"), 3000); }
     window.toggleSidebar = () => document.querySelector('.sidebar').classList.toggle('open');
 
-    // --- UPDATED STUDY MODE (QUIZ) LOGIC ---
+    // --- RE-IMPLEMENTED STUDY MODE (QUIZ) LOGIC ---
     let quizData = [];
     let currentQuestionIndex = 0;
     let quizScore = 0;
-    let requestedQuestionCount = 3;
-    let lastUsedPrompt = "";
+    let requestedQuestionCount = 5;
 
     window.openQuiz = () => {
         document.getElementById('quizModal').style.display = 'flex';
         resetQuizMenu();
     };
 
-    window.closeQuiz = () => {
-        document.getElementById('quizModal').style.display = 'none';
-        quizData = [];
-        currentQuestionIndex = 0;
-        quizScore = 0;
-        lastUsedPrompt = "";
-    };
-
-    window.setQuestionCount = (count) => {
-        requestedQuestionCount = count;
-        document.querySelectorAll('.count-btn').forEach(btn => btn.style.border = "none");
-        event.target.style.border = "2px solid white";
-    };
+    window.closeQuiz = () => { document.getElementById('quizModal').style.display = 'none'; quizData = []; currentQuestionIndex = 0; };
 
     window.resetQuizMenu = () => {
         document.getElementById('quizLoader').style.display = 'none';
         document.getElementById('quiz-options').style.display = 'grid';
-        document.getElementById('quiz-question').innerText = "Select Number of Questions & Mode:";
+        document.getElementById('quiz-question').innerText = "Customize Your Quiz Session:";
 
         document.getElementById('quiz-options').innerHTML = `
-            <div style="grid-column: 1/-1; display:flex; gap:10px; justify-content:center; margin-bottom:15px;">
-                <button class="count-btn" onclick="setQuestionCount(3)" style="background:#E21B3C; color:white; padding:5px 15px; border-radius:8px; cursor:pointer;">3 Qs</button>
-                <button class="count-btn" onclick="setQuestionCount(5)" style="background:#1368CE; color:white; padding:5px 15px; border-radius:8px; cursor:pointer;">5 Qs</button>
-                <button class="count-btn" onclick="setQuestionCount(10)" style="background:#26890C; color:white; padding:5px 15px; border-radius:8px; cursor:pointer;">10 Qs</button>
+            <div style="grid-column: 1/-1; display:flex; flex-direction:column; align-items:center; margin-bottom:15px; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 12px;">
+                <label style="color: white; font-size: 0.9rem; margin-bottom: 8px;">Number of Questions:</label>
+                <input type="number" id="quizCountInput" value="5" min="1" max="20"
+                       style="width: 80px; padding: 10px; border-radius: 8px; border: none; text-align: center; font-size: 1.2rem; font-weight: bold;">
             </div>
-            <button class="quiz-btn q-blue" onclick="startQuickQuiz()">Quick Quiz (Tasks)</button>
+            <button class="quiz-btn q-blue" onclick="startCustomQuiz('tasks')">Quick Quiz (From Tasks)</button>
             <button class="quiz-btn q-green" onclick="document.getElementById('materialInput').click()">Upload Materials</button>
         `;
     };
 
+    window.startCustomQuiz = (mode) => {
+        const count = document.getElementById('quizCountInput').value;
+        requestedQuestionCount = count;
+        if (mode === 'tasks') startQuickQuiz();
+    };
+
     window.startQuickQuiz = async () => {
-        if (globalTasks.length === 0) {
-            document.getElementById('quiz-question').innerText = "No tasks found! Upload a syllabus first.";
-            return;
-        }
         document.getElementById('quiz-options').style.display = 'none';
         document.getElementById('quizLoader').style.display = 'block';
-
-        const recentTask = [...globalTasks].reverse().find(t => t.originalText && t.originalText.trim() !== "");
-        const contextText = recentTask ? recentTask.originalText : "";
-        const topics = globalTasks.map(t => `${t.subject}: ${t.title}`).join(", ");
-
-        lastUsedPrompt = contextText
-            ? `Based strictly on this material: ${contextText.substring(0, 8000)}. Create a ${requestedQuestionCount} question multiple-choice quiz. Return ONLY JSON format: [{"question": "...", "options": ["Option 1", "Option 2", "Option 3", "Option 4"], "answer": "Exact text of the correct option"}]`
-            : `Create a ${requestedQuestionCount} question multiple-choice quiz based on these study topics: ${topics}. Return ONLY JSON format: [{"question": "...", "options": ["Option 1", "Option 2", "Option 3", "Option 4"], "answer": "Exact text of the correct option"}]`;
-        await generateAndStartQuiz(lastUsedPrompt);
+        const recentTask = [...globalTasks].reverse().find(t => t.originalText);
+        const context = recentTask ? recentTask.originalText : "general student topics";
+        const prompt = `Create a ${requestedQuestionCount} question quiz based on: ${context.substring(0, 5000)}. Return JSON: [{"question": "...", "options": ["A", "B", "C", "D"], "answer": "Exact correct text"}]`;
+        await generateAndStartQuiz(prompt);
     };
 
     window.handleMaterialUpload = async () => {
-        const fileInput = document.getElementById('materialInput');
-        if (fileInput.files.length === 0) return;
+        const count = document.getElementById('quizCountInput').value;
+        requestedQuestionCount = count;
+        const file = document.getElementById('materialInput').files[0];
         document.getElementById('quiz-options').style.display = 'none';
         document.getElementById('quizLoader').style.display = 'block';
-
-        try {
-            const file = fileInput.files[0];
-            let text = "";
-            if (file.name.endsWith('.pdf')) text = await extractTextFromPDF(file);
-            else if (file.name.endsWith('.docx')) text = await extractTextFromWord(file);
-            else text = await extractTextFromPPTX(file);
-
-           lastUsedPrompt = `Based on: ${text.substring(0, 8000)}. Create a ${requestedQuestionCount} question multiple-choice quiz. Return ONLY JSON format: [{"question": "...", "options": ["Option 1", "Option 2", "Option 3", "Option 4"], "answer": "Exact text of the correct option"}]`;
-
-            await sendNotificationEmail(
-                "Study Session Ready! 🚀",
-                "A new quiz has been generated from your uploaded materials. Start your focus session now!",
-                { titles: file.name, subjects: "User Material", dates: "Ready Now" }
-            );
-
-            await generateAndStartQuiz(lastUsedPrompt);
-        } catch (err) {
-            console.error("Material Upload Failed:", err);
-            resetQuizMenu();
-        }
+        let text = file.name.endsWith('.pdf') ? await extractTextFromPDF(file) : await extractTextFromWord(file);
+        const prompt = `Based on: ${text.substring(0, 5000)}. Create a ${requestedQuestionCount} question quiz. Return JSON format.`;
+        await generateAndStartQuiz(prompt);
     };
 
     async function generateAndStartQuiz(prompt) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
         try {
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            });
+            const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
             const data = await res.json();
-            if (!data.candidates || data.candidates.length === 0) { throw new Error("AI response unavailable."); }
-
-            let raw = data.candidates[0].content.parts[0].text;
-            const cleanedJson = raw.replace(/```json|```/g, '').trim();
-            const jsonMatch = cleanedJson.match(/\[[\s\S]*\]/);
-            if (!jsonMatch) throw new Error("Invalid JSON from AI");
-
-            quizData = JSON.parse(jsonMatch[0]);
+            const cleanedJson = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+            quizData = JSON.parse(cleanedJson);
             currentQuestionIndex = 0; quizScore = 0;
             document.getElementById('quizLoader').style.display = 'none';
             document.getElementById('quiz-options').style.display = 'grid';
             renderQuizQuestion();
-        } catch (err) {
-            console.error("Quiz Error:", err);
-            document.getElementById('quizLoader').innerHTML = `
-                <div style="color:white; padding:20px;">
-                    <p>⚠️ AI failed to generate the quiz.</p>
-                    <p style="font-size:0.8rem; opacity:0.7; margin-bottom:15px;">Reason: ${err.message}</p>
-                    <button class="quiz-btn q-red" onclick="generateAndStartQuiz(lastUsedPrompt)" style="margin-top:10px;">Retry Generation</button>
-                    <button class="close-quiz" onclick="resetQuizMenu()" style="border-color:white; margin-top:10px;">Back to Menu</button>
-                </div>`;
-        }
+        } catch (err) { resetQuizMenu(); showToast("Quiz Error"); }
     }
 
     function renderQuizQuestion() {
@@ -947,27 +754,13 @@ function setBarHeight(id, percent, count) {
         }
         const q = quizData[currentQuestionIndex];
         document.getElementById('quiz-question').innerText = q.question;
-        const colors = ['q-red', 'q-blue', 'q-yellow', 'q-green'];
-        document.getElementById('quiz-options').innerHTML = q.options.map((opt, i) =>
-            `<button class="quiz-btn ${colors[i]}" onclick="checkAnswer('${opt.replace(/'/g, "\\'")}')">${opt}</button>`
-        ).join('');
+        document.getElementById('quiz-options').innerHTML = q.options.map((opt, i) => `<button class="quiz-btn" onclick="checkAnswer('${opt.replace(/'/g, "\\'")}')">${opt}</button>`).join('');
     }
 
     window.checkAnswer = (selected) => {
-        const modalContent = document.querySelector('.quiz-content');
-        if (selected === quizData[currentQuestionIndex].answer) {
-            quizScore++;
-            modalContent.classList.add('flash-correct');
-            showToast("Correct! 🔥", "success");
-        } else {
-            modalContent.classList.add('flash-wrong');
-            showToast(`Wrong! Answer: ${quizData[currentQuestionIndex].answer}`, "error");
-        }
-        setTimeout(() => {
-            modalContent.classList.remove('flash-correct', 'flash-wrong');
-            currentQuestionIndex++;
-            renderQuizQuestion();
-        }, 1200);
+        if (selected === quizData[currentQuestionIndex].answer) quizScore++;
+        currentQuestionIndex++;
+        renderQuizQuestion();
     };
 </script>
 </body>
